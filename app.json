@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "NotaFácil Docente",
+    "slug": "nota-facil-docente",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "assetBundlePatterns": ["**/*"],
+    "ios": { "bundleIdentifier": "com.notafacil.docente" },
+    "android": {
+      "package": "com.notafacil.docente",
+      "permissions": [
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.INTERNET"
+      ]
+    },
+    "plugins": ["expo-secure-store"],
+    "scheme": "notafacil",
+    "extra": {},
+    "owner": "sisas"
+  }
+}

@@ -1,0 +1,307 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View, Text, ScrollView, TouchableOpacity,
+  StyleSheet, ActivityIndicator, Alert,
+} from 'react-native';
+import { apiFetch } from '../services/api';
+import { cerrarSesionGlobal } from '../services/auth';
+
+interface Periodo {
+  id: string;
+  numero: number;
+  cerrado: boolean;
+  fechaInicio: string;
+  fechaFin: string;
+}
+
+interface Profesor {
+  id: string;
+  nombre: string;
+  email: string;
+}
+
+interface Resumen {
+  totalProfesores: number;
+  totalCursos: number;
+  periodoActivo: string;
+}
+
+export default function RectorScreen({ navigation }: any) {
+  const [periodos, setPeriodos] = useState<Periodo[]>([]);
+  const [profesores, setProfesores] = useState<Profesor[]>([]);
+  const [resumen, setResumen] = useState<Resumen | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [accionando, setAccionando] = useState(false);
+
+  const cerrarSesion = () => {
+    Alert.alert(
+      'Cerrar sesión',
+      '¿Está seguro que desea salir?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Salir',
+          style: 'destructive',
+          onPress: () => cerrarSesionGlobal(),
+        },
+      ],
+    );
+  };
+
+  useEffect(() => {
+    cargarDatos();
+  }, []);
+
+  const cargarDatos = async () => {
+    try {
+      setLoading(true);
+      const [resPeriodos, resProfesores, resResumen] = await Promise.all([
+        apiFetch('/api/rector/periodos'),
+        apiFetch('/api/rector/profesores'),
+        apiFetch('/api/rector/reportes/resumen'),
+      ]);
+
+      if (resPeriodos.ok) setPeriodos(await resPeriodos.json());
+      if (resProfesores.ok) setProfesores(await resProfesores.json());
+      if (resResumen.ok) setResumen(await resResumen.json());
+    } catch (error: any) {
+      if (error.message !== 'Sesión vencida') {
+        Alert.alert('Error', 'No se pudieron cargar los datos');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAbrirPeriodo = async (periodo: Periodo) => {
+    Alert.alert(
+      'Abrir Período',
+      `¿Abrir el Período ${periodo.numero}? Solo puede haber un período abierto a la vez.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Abrir',
+          onPress: async () => {
+            try {
+              setAccionando(true);
+              const res = await apiFetch(`/api/rector/periodos/${periodo.id}/abrir`, {
+                method: 'PUT',
+              });
+              if (res.ok) {
+                Alert.alert('Éxito', `Período ${periodo.numero} abierto correctamente`);
+                cargarDatos();
+              } else {
+                const err = await res.json().catch(() => ({}));
+                Alert.alert('Error', err.message || 'No se pudo abrir el período');
+              }
+            } catch (error: any) {
+              if (error.message !== 'Sesión vencida') {
+                Alert.alert('Error', 'No se pudo conectar al servidor');
+              }
+            } finally {
+              setAccionando(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleCerrarPeriodo = async (periodo: Periodo) => {
+    Alert.alert(
+      'Cerrar Período',
+      `¿Cerrar el Período ${periodo.numero}? Los profesores no podrán ingresar más notas.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Cerrar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setAccionando(true);
+              const res = await apiFetch(`/api/rector/periodos/${periodo.id}/cerrar`, {
+                method: 'PUT',
+              });
+              if (res.ok) {
+                Alert.alert('Éxito', `Período ${periodo.numero} cerrado correctamente`);
+                cargarDatos();
+              } else {
+                Alert.alert('Error', 'No se pudo cerrar el período');
+              }
+            } catch (error: any) {
+              if (error.message !== 'Sesión vencida') {
+                Alert.alert('Error', 'No se pudo conectar al servidor');
+              }
+            } finally {
+              setAccionando(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleVerAsignaciones = (profesor: Profesor) => {
+    navigation.navigate('AsignacionesProfesor', { profesor });
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#1a3a6b" />
+        <Text style={styles.loadingText}>Cargando panel rector...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView style={styles.container}>
+
+      {/* Header con salir */}
+      <View style={styles.headerBar}>
+        <Text style={styles.headerTitulo}>Panel Rector</Text>
+        <TouchableOpacity style={styles.botonSalir} onPress={cerrarSesion}>
+          <Text style={styles.botonSalirTexto}>Salir</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Resumen */}
+      {resumen && (
+        <View style={styles.resumenRow}>
+          <View style={styles.resumenCard}>
+            <Text style={styles.resumenNumero}>{resumen.totalProfesores}</Text>
+            <Text style={styles.resumenLabel}>Profesores</Text>
+          </View>
+          <View style={styles.resumenCard}>
+            <Text style={styles.resumenNumero}>{resumen.totalCursos}</Text>
+            <Text style={styles.resumenLabel}>Cursos</Text>
+          </View>
+          <View style={[styles.resumenCard, { backgroundColor: '#1a3a6b' }]}>
+            <Text style={[styles.resumenNumero, { color: '#fff', fontSize: 13 }]}>
+              {resumen.periodoActivo}
+            </Text>
+            <Text style={[styles.resumenLabel, { color: '#93c5fd' }]}>Período Activo</Text>
+          </View>
+        </View>
+      )}
+
+      {/* Períodos */}
+      <Text style={styles.seccionTitulo}>Períodos</Text>
+      {periodos.map((periodo) => (
+        <View key={periodo.id} style={styles.periodoCard}>
+          <View style={styles.periodoInfo}>
+            <Text style={styles.periodoNombre}>Período {periodo.numero}</Text>
+            <View style={[
+              styles.estadoBadge,
+              { backgroundColor: periodo.cerrado ? '#ef4444' : '#10b981' }
+            ]}>
+              <Text style={styles.estadoBadgeText}>
+                {periodo.cerrado ? 'Cerrado' : 'Abierto'}
+              </Text>
+            </View>
+          </View>
+          <Text style={styles.periodoFechas}>
+            {periodo.fechaInicio?.slice(0, 10)} → {periodo.fechaFin?.slice(0, 10)}
+          </Text>
+          <View style={styles.periodoAcciones}>
+            {periodo.cerrado ? (
+              <TouchableOpacity
+                style={[styles.accionBtn, styles.abrirBtn]}
+                onPress={() => handleAbrirPeriodo(periodo)}
+                disabled={accionando}
+              >
+                <Text style={styles.accionBtnText}>Abrir</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.accionBtn, styles.cerrarBtn]}
+                onPress={() => handleCerrarPeriodo(periodo)}
+                disabled={accionando}
+              >
+                <Text style={styles.accionBtnText}>Cerrar</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      ))}
+
+      {/* Profesores */}
+      <Text style={styles.seccionTitulo}>Profesores</Text>
+      {profesores.map((profesor) => (
+        <TouchableOpacity
+          key={profesor.id}
+          style={styles.profesorCard}
+          onPress={() => handleVerAsignaciones(profesor)}
+        >
+          <View style={styles.profesorAvatar}>
+            <Text style={styles.profesorAvatarText}>
+              {profesor.nombre.charAt(0).toUpperCase()}
+            </Text>
+          </View>
+          <View style={styles.profesorInfo}>
+            <Text style={styles.profesorNombre}>{profesor.nombre}</Text>
+            <Text style={styles.profesorEmail}>{profesor.email}</Text>
+          </View>
+          <Text style={styles.arrow}>›</Text>
+        </TouchableOpacity>
+      ))}
+
+      <View style={{ height: 32 }} />
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#f3f4f6', padding: 16 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 12, color: '#6b7280' },
+  resumenRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
+  resumenCard: {
+    flex: 1, backgroundColor: '#fff', borderRadius: 12,
+    padding: 14, alignItems: 'center', elevation: 2,
+  },
+  resumenNumero: { fontSize: 24, fontWeight: '800', color: '#1a3a6b' },
+  resumenLabel: { fontSize: 11, color: '#6b7280', marginTop: 4, fontWeight: '600' },
+  seccionTitulo: {
+    fontSize: 16, fontWeight: '700', color: '#1a3a6b',
+    marginBottom: 10, marginTop: 8,
+  },
+  periodoCard: {
+    backgroundColor: '#fff', borderRadius: 12, padding: 16,
+    marginBottom: 10, elevation: 2,
+  },
+  periodoInfo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  periodoNombre: { fontSize: 16, fontWeight: '700', color: '#1f2937' },
+  estadoBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  estadoBadgeText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+  periodoFechas: { fontSize: 12, color: '#6b7280', marginBottom: 10 },
+  periodoAcciones: { flexDirection: 'row', justifyContent: 'flex-end' },
+  accionBtn: { paddingHorizontal: 20, paddingVertical: 8, borderRadius: 8 },
+  abrirBtn: { backgroundColor: '#10b981' },
+  cerrarBtn: { backgroundColor: '#ef4444' },
+  accionBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  profesorCard: {
+    backgroundColor: '#fff', borderRadius: 12, padding: 16,
+    marginBottom: 10, elevation: 2, flexDirection: 'row', alignItems: 'center',
+  },
+  profesorAvatar: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: '#1a3a6b', alignItems: 'center', justifyContent: 'center',
+    marginRight: 12,
+  },
+  profesorAvatarText: { color: '#fff', fontWeight: '800', fontSize: 18 },
+  profesorInfo: { flex: 1 },
+  profesorNombre: { fontSize: 15, fontWeight: '700', color: '#1f2937' },
+  profesorEmail: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  arrow: { fontSize: 24, color: '#1a3a6b', fontWeight: 'bold' },
+headerBar: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', marginBottom: 16,
+  },
+  headerTitulo: { fontSize: 20, fontWeight: '800', color: '#1a3a6b' },
+  botonSalir: {
+    backgroundColor: '#ef4444', paddingHorizontal: 14,
+    paddingVertical: 8, borderRadius: 8,
+  },
+  botonSalirTexto: { color: '#fff', fontWeight: '700', fontSize: 13 },
+});
