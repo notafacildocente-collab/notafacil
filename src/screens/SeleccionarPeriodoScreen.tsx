@@ -44,7 +44,7 @@ export default function SeleccionarPeriodoScreen({ navigation, route }: any) {
 
   const handleSeleccionarPeriodo = async (periodo: Periodo) => {
     // El modo 'reporte' permite ver el reporte aunque el período esté cerrado
-    if (periodo.cerrado && modo !== 'reporte') {
+    if (periodo.cerrado && modo !== 'reporte' && modo !== 'calificarIA') {
       Alert.alert('Periodo cerrado', 'Este periodo no permite modificaciones.');
       return;
     }
@@ -74,6 +74,8 @@ export default function SeleccionarPeriodoScreen({ navigation, route }: any) {
         navigation.navigate('Planilla', params);
       } else if (modo === 'reporte') {
         navigation.navigate('Reporte', params);
+      } else if (modo === 'calificarIA') {
+        navigation.navigate('CalificarIA', params);
       } else {
         navigation.navigate('Calificacion', params);
       }
@@ -114,7 +116,7 @@ export default function SeleccionarPeriodoScreen({ navigation, route }: any) {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={[styles.card, item.cerrado && modo !== 'reporte' && styles.cardCerrado]}
+              style={[styles.card, item.cerrado && modo !== 'reporte' && modo !== 'calificarIA' && styles.cardCerrado]}
               onPress={() => handleSeleccionarPeriodo(item)}
               disabled={navegando}
             >

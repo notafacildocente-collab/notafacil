@@ -26,6 +26,7 @@ import RecuperarPasswordScreen from './screens/RecuperarPasswordScreen';
 import SplashScreen from './screens/SplashScreen';
 import ReporteScreen from './screens/ReporteScreen';
 import ConfigurarDesempenosScreen from './screens/ConfigurarDesempenosScreen';
+import CalificarIAScreen from './screens/CalificarIAScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -95,6 +96,7 @@ function App() {
                 <Stack.Screen name="CambiarPassword" component={CambiarPasswordScreen} options={{ title: 'Cambiar Contrasena', headerBackVisible: true }} />
                 <Stack.Screen name="Boletin" component={BoletinScreen} options={{ title: 'Boletín del Curso', headerBackVisible: true }} />
                 <Stack.Screen name="Reporte" component={ReporteScreen} options={{ title: 'Reporte a padres', headerBackVisible: true }} />
+                <Stack.Screen name="CalificarIA" component={CalificarIAScreen} options={{ title: 'Calificar con IA', headerBackVisible: true, headerStyle: { backgroundColor: '#7c3aed' }, headerTintColor: '#fff', headerTitleStyle: { fontWeight: '700' } }} />
                 <Stack.Screen name="ConfigurarDesempenos" component={ConfigurarDesempenosScreen} options={{ title: 'Configurar Desempeños', headerBackVisible: true }} />
                 <Stack.Screen name="Rector" component={RectorScreen} options={{ title: 'Panel Rector', headerBackVisible: false }} />
               </>

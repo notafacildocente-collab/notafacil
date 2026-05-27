@@ -55,6 +55,7 @@ export default function CalificacionScreen() {
   const [descripcionInput, setDescripcionInput] = useState('');
   const [descripcionSugerida, setDescripcionSugerida] = useState<string | null>(null);
   const [loadingDescripcion, setLoadingDescripcion] = useState(false);
+  const [busquedaEst, setBusquedaEst] = useState('');
   const [calificandoIA, setCalificandoIA] = useState(false);
   const [sugerenciaIA, setSugerenciaIA] = useState<SugerenciaIA | null>(null);
   const [imagenesIA, setImagenesIA] = useState<Array<{base64: string; mimeType: string}>>([]);
@@ -332,8 +333,26 @@ export default function CalificacionScreen() {
         <Text style={styles.headerPeriodo}>Periodo {periodoNumero}</Text>
       </View>
 
+      <View style={styles.searchRow}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar estudiante..."
+          placeholderTextColor="#9ca3af"
+          value={busquedaEst}
+          onChangeText={setBusquedaEst}
+          clearButtonMode="while-editing"
+        />
+        {busquedaEst.length > 0 && (
+          <TouchableOpacity style={styles.searchClear} onPress={() => setBusquedaEst('')}>
+            <Text style={styles.searchClearText}>✕</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll} contentContainerStyle={styles.chipContainer}>
-        {estudiantes.map((est) => {
+        {estudiantes
+          .filter((e) => busquedaEst.trim() === '' || `${e.nombre} ${e.apellido}`.toLowerCase().includes(busquedaEst.toLowerCase()))
+          .map((est) => {
           const activo = est.id === estudianteActivo?.id;
           return (
             <TouchableOpacity key={est.id} style={[styles.chip, activo && styles.chipActivo]} onPress={() => setEstudianteActivo(est)}>
@@ -344,6 +363,7 @@ export default function CalificacionScreen() {
           );
         })}
       </ScrollView>
+
 
       <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollPadding}>
         <View style={styles.estudianteCard}>
@@ -545,6 +565,10 @@ const styles = StyleSheet.create({
   headerBar: { backgroundColor: '#1a3a6b', paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headerMateria: { color: '#fff', fontWeight: '700', fontSize: 16, flex: 1 },
   headerPeriodo: { color: '#93c5fd', fontSize: 14 },
+  searchRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
+  searchInput: { flex: 1, backgroundColor: '#f1f5f9', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7, fontSize: 14, color: '#1f2937' },
+  searchClear: { marginLeft: 8, padding: 4 },
+  searchClearText: { color: '#9ca3af', fontSize: 16, fontWeight: '700' },
   chipScroll: { maxHeight: 52, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
   chipContainer: { paddingHorizontal: 12, paddingVertical: 8, gap: 8, flexDirection: 'row', alignItems: 'center' },
   chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, backgroundColor: '#f1f5f9', borderWidth: 1, borderColor: '#e2e8f0' },

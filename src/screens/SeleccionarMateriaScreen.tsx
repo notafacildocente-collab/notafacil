@@ -214,16 +214,16 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.boton, styles.botonReporte]}
+                  style={[styles.boton, styles.botonCalificarIA]}
                   onPress={() =>
                     navigation.navigate('SeleccionarPeriodo', {
                       materiaId: item.id,
                       materiaNombre: item.nombre,
-                      modo: 'reporte',
+                      modo: 'calificarIA',
                     })
                   }
                 >
-                  <Text style={styles.botonTexto}>Reporte</Text>
+                  <Text style={styles.botonTexto}>Calif. IA</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   botonCalificar: { backgroundColor: '#1a3a6b' },
   botonAsistencia: { backgroundColor: '#059669' },
   botonPlanilla: { backgroundColor: '#7c3aed' },
-  botonReporte: { backgroundColor: '#0891b2' },
+  botonCalificarIA: { backgroundColor: '#7c3aed' },
   botonTexto: { color: '#fff', fontWeight: '600', fontSize: 11 },
   botonBoletin: {
     backgroundColor: '#dc2626', borderRadius: 12,
