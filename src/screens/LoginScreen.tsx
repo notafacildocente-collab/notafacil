@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
-const API_URL = 'https://notafacil-backend-production.up.railway.app';
+const API_URL = 'https://notafacil-backend-539h.onrender.com';
 
 export default function LoginScreen({ onLogin, navigation }: any) {
   const [email, setEmail] = useState('');

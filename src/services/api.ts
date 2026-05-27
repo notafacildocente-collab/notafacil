@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import { cerrarSesionGlobal } from './auth';
 
-const API_URL = 'https://notafacil-backend-production.up.railway.app';
+const API_URL = 'https://notafacil-backend-539h.onrender.com';
 
 export async function apiFetch(path: string, options: RequestInit = {}): Promise<Response> {
   const token = await SecureStore.getItemAsync('accessToken');

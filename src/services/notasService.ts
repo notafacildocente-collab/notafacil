@@ -6,7 +6,7 @@
 import axios from 'axios';
 import { Nota } from '../types/models';
 
-const API_BASE_URL = 'https://notafacil-backend-production.up.railway.app/api';
+const API_BASE_URL = 'https://notafacil-backend-539h.onrender.com/api';
 export const notasService = {
   /**
    * Obtener notas del servidor

@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-const API_URL = 'https://notafacil-backend-production.up.railway.app';
+const API_URL = 'https://notafacil-backend-539h.onrender.com';
 
 export default function RecuperarPasswordScreen() {
   const navigation = useNavigation();

@@ -20,11 +20,21 @@
       "backgroundColor": "#ffffff",
       "permissions": [
         "android.permission.ACCESS_NETWORK_STATE",
-        "android.permission.INTERNET"
+        "android.permission.INTERNET",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ]
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "NotaFácil necesita acceso a tus fotos para calificar trabajos con IA.",
+          "cameraPermission": "NotaFácil necesita la cámara para fotografiar trabajos y calificarlos con IA."
+        }
+      ]
     ],
     "scheme": "notafacil",
     "extra": {

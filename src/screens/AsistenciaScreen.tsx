@@ -36,7 +36,7 @@ interface RegistroLocal {
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
-const API_URL = 'https://notafacil-backend-production.up.railway.app';
+const API_URL = 'https://notafacil-backend-539h.onrender.com';
 
 const ESTADOS: EstadoAsistencia[] = ['PRESENTE', 'AUSENTE', 'JUSTIFICADA', 'INJUSTIFICADA'];
 

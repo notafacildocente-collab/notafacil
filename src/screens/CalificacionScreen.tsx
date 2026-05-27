@@ -5,6 +5,7 @@ import {
   StyleSheet, Platform,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 import { apiFetch } from '../services/api';
 
 interface Estudiante {
@@ -31,6 +32,11 @@ interface Nota {
   createdAt: string;
 }
 
+interface SugerenciaIA {
+  notaSugerida: number;
+  razonamiento: string;
+}
+
 export default function CalificacionScreen() {
   const route = useRoute();
   const navigation = useNavigation();
@@ -49,6 +55,8 @@ export default function CalificacionScreen() {
   const [descripcionInput, setDescripcionInput] = useState('');
   const [descripcionSugerida, setDescripcionSugerida] = useState<string | null>(null);
   const [loadingDescripcion, setLoadingDescripcion] = useState(false);
+  const [calificandoIA, setCalificandoIA] = useState(false);
+  const [sugerenciaIA, setSugerenciaIA] = useState<SugerenciaIA | null>(null);
 
   useEffect(() => {
     const cargarDatosIniciales = async () => {
@@ -83,7 +91,6 @@ export default function CalificacionScreen() {
 
   const cargarNotas = useCallback(async (estudianteId: string) => {
     try {
-      console.log('ASIGNACION ID:', asignacionId);
       const res = await apiFetch(`/api/notas?asignacionId=${asignacionId}&estudianteId=${estudianteId}`);
       if (res.ok) {
         const data: Nota[] = await res.json();
@@ -121,23 +128,14 @@ export default function CalificacionScreen() {
       return;
     }
     const valorLimpio = valorInput.replace(',', '.').trim();
-    if (valorLimpio === '') {
-      Alert.alert('Error', 'Debes ingresar una nota');
-      return;
-    }
     if (!/^\d+(\.\d+)?$/.test(valorLimpio)) {
       Alert.alert('Error', 'La nota debe ser un número. Ejemplo: 4.5');
       return;
     }
     const valor = parseFloat(valorLimpio);
-    if (valor < 1.0) {
-      Alert.alert('Nota muy baja', 'La nota mínima es 1.0');
-      return;
-    }
-    if (valor > 5.0) {
-      Alert.alert('Nota muy alta', 'La nota máxima es 5.0');
-      return;
-    }
+    if (valor < 1.0) { Alert.alert('Nota muy baja', 'La nota mínima es 1.0'); return; }
+    if (valor > 5.0) { Alert.alert('Nota muy alta', 'La nota máxima es 5.0'); return; }
+
     try {
       setSaving(true);
       const res = await apiFetch('/api/notas', {
@@ -159,6 +157,7 @@ export default function CalificacionScreen() {
       setNotas((prev) => [{ ...notaNueva, valor: parseFloat(String(notaNueva.valor)) }, ...prev]);
       setValorInput('');
       setDescripcionInput('');
+      setSugerenciaIA(null);
       setModalVisible(false);
     } catch (error: any) {
       if (error.message !== 'Sesión vencida') {
@@ -193,14 +192,13 @@ export default function CalificacionScreen() {
   const abrirModal = async (desempeno: Desempeno) => {
     setDesempenoSeleccionado(desempeno);
     setValorInput('');
+    setSugerenciaIA(null);
     setDescripcionSugerida(null);
     setModalVisible(true);
 
-    // Posición de la nueva nota = cuántas notas ya tiene este estudiante en este desempeño
     const notasActuales = notas.filter((n) => n.desempenoId === desempeno.id);
     const posicion = notasActuales.length;
 
-    // Buscar descripción sugerida de otros estudiantes en la misma posición
     try {
       setLoadingDescripcion(true);
       const res = await apiFetch(
@@ -219,6 +217,96 @@ export default function CalificacionScreen() {
       setDescripcionInput('');
     } finally {
       setLoadingDescripcion(false);
+    }
+  };
+
+  const pickImageYCalificar = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Permiso requerido',
+        'Necesitamos acceso a la cámara para calificar con IA.',
+        [{ text: 'OK' }],
+      );
+      return;
+    }
+
+    Alert.alert('Calificar con IA', '¿Cómo quieres obtener la imagen del trabajo?', [
+      {
+        text: 'Cámara',
+        onPress: () => tomarFoto('camera'),
+      },
+      {
+        text: 'Galería',
+        onPress: () => tomarFoto('gallery'),
+      },
+      { text: 'Cancelar', style: 'cancel' },
+    ]);
+  };
+
+  const tomarFoto = async (fuente: 'camera' | 'gallery') => {
+    try {
+      let result: ImagePicker.ImagePickerResult;
+
+      if (fuente === 'camera') {
+        result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          quality: 0.7,
+          base64: true,
+        });
+      } else {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permiso requerido', 'Necesitamos acceso a la galería.');
+          return;
+        }
+        result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          quality: 0.7,
+          base64: true,
+        });
+      }
+
+      if (result.canceled || !result.assets?.[0]?.base64) return;
+
+      const asset = result.assets[0];
+      const mimeType = asset.mimeType || 'image/jpeg';
+      await enviarImagenAIA(asset.base64!, mimeType);
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo obtener la imagen');
+    }
+  };
+
+  const enviarImagenAIA = async (base64: string, mimeType: string) => {
+    if (!desempenoSeleccionado) return;
+    try {
+      setCalificandoIA(true);
+      setSugerenciaIA(null);
+
+      const res = await apiFetch('/api/notas/calificar-ia', {
+        method: 'POST',
+        body: JSON.stringify({
+          asignacionId,
+          desempenoId: desempenoSeleccionado.id,
+          imagenBase64: base64,
+          mimeType,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Error al calificar con IA');
+      }
+
+      const data: SugerenciaIA = await res.json();
+      setSugerenciaIA(data);
+      setValorInput(data.notaSugerida.toFixed(1));
+    } catch (error: any) {
+      if (error.message !== 'Sesión vencida') {
+        Alert.alert('Error IA', error.message || 'No se pudo calificar con IA');
+      }
+    } finally {
+      setCalificandoIA(false);
     }
   };
 
@@ -329,7 +417,6 @@ export default function CalificacionScreen() {
           );
         })}
 
-
         <View style={{ height: 32 }} />
       </ScrollView>
 
@@ -341,6 +428,38 @@ export default function CalificacionScreen() {
             </Text>
             <Text style={styles.modalSubtitulo}>{estudianteActivo?.nombre} {estudianteActivo?.apellido}</Text>
 
+            {/* Botón calificar con IA */}
+            <TouchableOpacity
+              style={[styles.botonIA, calificandoIA && styles.botonDisabled]}
+              onPress={pickImageYCalificar}
+              disabled={calificandoIA || saving}
+            >
+              {calificandoIA ? (
+                <ActivityIndicator size="small" color="#7c3aed" />
+              ) : (
+                <Text style={styles.botonIAText}>Calificar con IA</Text>
+              )}
+            </TouchableOpacity>
+
+            {/* Sugerencia de la IA */}
+            {sugerenciaIA && (
+              <View style={styles.sugerenciaCard}>
+                <View style={styles.sugerenciaHeader}>
+                  <Text style={styles.sugerenciaLabel}>Nota sugerida por IA</Text>
+                  <Text style={[styles.sugerenciaNota, { color: sugerenciaIA.notaSugerida >= 3.0 ? '#10b981' : '#ef4444' }]}>
+                    {sugerenciaIA.notaSugerida.toFixed(1)}
+                  </Text>
+                </View>
+                <Text style={styles.sugerenciaRazonamiento}>{sugerenciaIA.razonamiento}</Text>
+                <TouchableOpacity
+                  style={styles.botonAceptarIA}
+                  onPress={() => setValorInput(sugerenciaIA.notaSugerida.toFixed(1))}
+                >
+                  <Text style={styles.botonAceptarIAText}>Aceptar nota</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             <Text style={styles.inputLabel}>Nota (1.0 – 5.0) *</Text>
             <TextInput
               style={styles.input}
@@ -348,7 +467,6 @@ export default function CalificacionScreen() {
               keyboardType="decimal-pad"
               value={valorInput}
               onChangeText={setValorInput}
-              autoFocus
             />
 
             <Text style={styles.inputLabel}>
@@ -368,10 +486,18 @@ export default function CalificacionScreen() {
             )}
 
             <View style={styles.modalBotones}>
-              <TouchableOpacity style={[styles.botonModal, styles.botonCancelar]} onPress={() => setModalVisible(false)} disabled={saving}>
+              <TouchableOpacity
+                style={[styles.botonModal, styles.botonCancelar]}
+                onPress={() => { setModalVisible(false); setSugerenciaIA(null); }}
+                disabled={saving}
+              >
                 <Text style={styles.botonCancelarText}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.botonModal, styles.botonGuardar, saving && styles.botonDisabled]} onPress={handleAgregarNota} disabled={saving}>
+              <TouchableOpacity
+                style={[styles.botonModal, styles.botonGuardar, saving && styles.botonDisabled]}
+                onPress={handleAgregarNota}
+                disabled={saving}
+              >
                 {saving ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.botonGuardarText}>Guardar</Text>}
               </TouchableOpacity>
             </View>
@@ -431,7 +557,16 @@ const styles = StyleSheet.create({
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalSheet: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24 },
   modalTitulo: { fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 4 },
-  modalSubtitulo: { fontSize: 14, color: '#6b7280', marginBottom: 20 },
+  modalSubtitulo: { fontSize: 14, color: '#6b7280', marginBottom: 16 },
+  botonIA: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f5f3ff', borderWidth: 1.5, borderColor: '#7c3aed', borderRadius: 10, paddingVertical: 11, marginBottom: 12, gap: 8 },
+  botonIAText: { color: '#7c3aed', fontWeight: '700', fontSize: 14 },
+  sugerenciaCard: { backgroundColor: '#faf5ff', borderWidth: 1.5, borderColor: '#a78bfa', borderRadius: 10, padding: 12, marginBottom: 12 },
+  sugerenciaHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  sugerenciaLabel: { fontSize: 11, fontWeight: '700', color: '#7c3aed', textTransform: 'uppercase', letterSpacing: 0.5 },
+  sugerenciaNota: { fontSize: 28, fontWeight: '800' },
+  sugerenciaRazonamiento: { fontSize: 13, color: '#4b5563', lineHeight: 18, marginBottom: 10 },
+  botonAceptarIA: { backgroundColor: '#7c3aed', borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
+  botonAceptarIAText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   inputLabel: { fontSize: 12, fontWeight: '600', color: '#374151', marginBottom: 6, marginTop: 12 },
   input: { borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, color: '#111827', backgroundColor: '#f9fafb' },
   inputMultiline: { minHeight: 72, textAlignVertical: 'top' },
@@ -441,7 +576,6 @@ const styles = StyleSheet.create({
   notasLista: { paddingHorizontal: 12, paddingTop: 8 },
   notaItem: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#dcfce7' },
   notaDesc: { color: '#166534', fontSize: 13, flex: 1 },
-  notaValor: { color: '#16a34a', fontWeight: '700', fontSize: 14 },
   modalBotones: { flexDirection: 'row', gap: 12, marginTop: 24 },
   botonModal: { flex: 1, paddingVertical: 13, borderRadius: 10, alignItems: 'center' },
   botonCancelar: { backgroundColor: '#f1f5f9' },
