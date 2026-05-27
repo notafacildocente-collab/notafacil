@@ -86,10 +86,8 @@ export default function RectorScreen({ navigation }: any) {
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
+      quality: 0.8,
       base64: true,
-      allowsEditing: true,
-      aspect: [4, 2],
     });
     if (result.canceled || !result.assets?.[0]?.base64) return;
     const asset = result.assets[0];
@@ -373,7 +371,7 @@ headerBar: {
     backgroundColor: '#fff', borderRadius: 12, padding: 16,
     marginBottom: 18, elevation: 2, alignItems: 'center',
   },
-  logoPreview: { width: 180, height: 80, marginBottom: 12 },
+  logoPreview: { width: 200, height: 120, marginBottom: 12 },
   logoPlaceholder: { alignItems: 'center', marginBottom: 12 },
   logoPlaceholderIcon: { fontSize: 36 },
   logoPlaceholderText: { fontSize: 12, color: '#9ca3af', marginTop: 4 },
