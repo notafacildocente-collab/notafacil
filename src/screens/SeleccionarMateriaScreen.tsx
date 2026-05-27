@@ -14,8 +14,6 @@ interface Materia {
   asignacionId: string;
 }
 
-const COLORES_ACENTO = ['#1a3a6b', '#059669', '#7c3aed', '#D97757', '#dc2626', '#0891b2', '#d97706', '#be185d'];
-
 export default function SeleccionarMateriaScreen({ navigation }: any) {
   const [materias, setMaterias] = useState<Materia[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,11 +80,11 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
     ? nombre.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase()
     : 'P';
 
-  if (loading && rolRef.current !== 'RECTOR' && rolRef.current !== 'ESTUDIANTE') {
+  if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <StatusBar barStyle="light-content" backgroundColor="#0d2240" />
-        <ActivityIndicator size="large" color="#D97757" />
+        <StatusBar barStyle="light-content" backgroundColor="#1E3A5F" />
+        <ActivityIndicator size="large" color="#2563EB" />
         <Text style={styles.loadingText}>Cargando materias...</Text>
       </View>
     );
@@ -94,9 +92,9 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
 
   return (
     <View style={styles.flex}>
-      <StatusBar barStyle="light-content" backgroundColor="#0d2240" />
+      <StatusBar barStyle="light-content" backgroundColor="#1E3A5F" />
 
-      {/* ── HEADER ── */}
+      {/* HEADER */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View style={styles.avatarWrap}>
@@ -107,34 +105,34 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
             <Text style={styles.headerNombre} numberOfLines={1}>{nombre || 'Profesora'}</Text>
           </View>
           <View style={styles.headerAcciones}>
-            <TouchableOpacity style={styles.btnIcono} onPress={() => navigation.navigate('Horario')}>
-              <Text style={styles.btnIconoEmoji}>🗓</Text>
+            <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.navigate('Horario')}>
+              <Text style={styles.headerBtnText}>Horario</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.btnIcono, styles.btnSalir]} onPress={cerrarSesion}>
-              <Text style={styles.btnIconoEmoji}>⏏</Text>
+            <TouchableOpacity style={[styles.headerBtn, styles.headerBtnSalir]} onPress={cerrarSesion}>
+              <Text style={styles.headerBtnText}>Salir</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.statsRow}>
-          <View style={styles.statBadge}>
+          <View style={styles.statItem}>
             <Text style={styles.statNum}>{materias.length}</Text>
             <Text style={styles.statLabel}>materias</Text>
           </View>
           {periodoInfo && (
-            <View style={[styles.statBadge, styles.statBadgeAlt]}>
-              <Text style={styles.statNum}>P{periodoInfo.numero}</Text>
-              <Text style={styles.statLabel}>período activo</Text>
+            <View style={[styles.statItem, styles.statItemActive]}>
+              <Text style={[styles.statNum, styles.statNumActive]}>P{periodoInfo.numero}</Text>
+              <Text style={[styles.statLabel, styles.statLabelActive]}>período activo</Text>
             </View>
           )}
         </View>
       </View>
 
-      {/* ── LISTA ── */}
+      {/* LISTA */}
       {materias.length === 0 ? (
         <View style={styles.emptyWrap}>
-          <Text style={styles.emptyIcon}>📚</Text>
-          <Text style={styles.emptyText}>Sin materias asignadas</Text>
+          <Text style={styles.emptyTitle}>Sin materias asignadas</Text>
+          <Text style={styles.emptyDesc}>Contacta al rector para que te asigne materias.</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={cargarMaterias}>
             <Text style={styles.retryText}>Reintentar</Text>
           </TouchableOpacity>
@@ -145,80 +143,72 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.lista}
           showsVerticalScrollIndicator={false}
-          ListHeaderComponent={<Text style={styles.seccionTitulo}>Mis materias</Text>}
+          ListHeaderComponent={
+            <Text style={styles.seccionLabel}>MIS MATERIAS</Text>
+          }
           ListFooterComponent={() =>
             cursoId && periodoInfo ? (
               <TouchableOpacity
                 style={styles.botonBoletin}
                 onPress={() => navigation.navigate('Boletin', { cursoId, periodoId: periodoInfo.id, periodoNumero: periodoInfo.numero })}
               >
-                <Text style={styles.botonBoletinIcon}>📋</Text>
-                <Text style={styles.botonBoletinTexto}>Boletín del Curso</Text>
+                <Text style={styles.botonBoletinTexto}>Ver Boletín del Curso</Text>
+                <Text style={styles.botonBoletinFlecha}>→</Text>
               </TouchableOpacity>
             ) : null
           }
-          renderItem={({ item, index }) => {
-            const acento = COLORES_ACENTO[index % COLORES_ACENTO.length];
-            return (
-              <View style={styles.card}>
-                <View style={[styles.cardAccent, { backgroundColor: acento }]} />
-                <View style={styles.cardBody}>
-                  <View style={styles.cardTitleRow}>
-                    <View style={[styles.cardIconCircle, { backgroundColor: acento + '22' }]}>
-                      <Text style={styles.cardIconText}>{item.nombre.charAt(0)}</Text>
-                    </View>
-                    <View style={styles.cardTitleInfo}>
-                      <Text style={styles.materiaNombre}>{item.nombre}</Text>
-                      <Text style={styles.materiaCodigo}>{item.codigo}</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.btnGrid}>
-                    <TouchableOpacity
-                      style={[styles.btnAccion, { backgroundColor: '#1a3a6b' }]}
-                      onPress={() => navigation.navigate('SeleccionarPeriodo', { materiaId: item.id, materiaNombre: item.nombre, modo: 'calificar' })}
-                    >
-                      <Text style={styles.btnAccionIcon}>📝</Text>
-                      <Text style={styles.btnAccionText}>Calificar</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.btnAccion, { backgroundColor: '#059669' }]}
-                      onPress={() => navigation.navigate('SeleccionarPeriodo', { materiaId: item.id, materiaNombre: item.nombre, modo: 'asistencia' })}
-                    >
-                      <Text style={styles.btnAccionIcon}>✋</Text>
-                      <Text style={styles.btnAccionText}>Asistencia</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.btnAccion, { backgroundColor: '#7c3aed' }]}
-                      onPress={() => navigation.navigate('SeleccionarPeriodo', { materiaId: item.id, materiaNombre: item.nombre, modo: 'planilla' })}
-                    >
-                      <Text style={styles.btnAccionIcon}>📊</Text>
-                      <Text style={styles.btnAccionText}>Planilla</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.btnAccion, styles.btnIA]}
-                      onPress={() => navigation.navigate('SeleccionarPeriodo', { materiaId: item.id, materiaNombre: item.nombre, modo: 'calificarIA' })}
-                    >
-                      <Text style={styles.btnAccionIcon}>🤖</Text>
-                      <Text style={styles.btnAccionText}>Calif. IA</Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* Botón Riesgo IA — fila completa */}
-                  <TouchableOpacity
-                    style={styles.btnRiesgo}
-                    onPress={() => navigation.navigate('SeleccionarPeriodo', { materiaId: item.id, materiaNombre: item.nombre, modo: 'riesgoIA' })}
-                  >
-                    <Text style={styles.btnAccionIcon}>🚦</Text>
-                    <Text style={styles.btnRiesgoText}>Análisis de Riesgo IA</Text>
-                  </TouchableOpacity>
+          renderItem={({ item }) => (
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <View style={styles.cardIconWrap}>
+                  <Text style={styles.cardIconText}>{item.nombre.charAt(0)}</Text>
+                </View>
+                <View style={styles.cardTitleWrap}>
+                  <Text style={styles.cardNombre}>{item.nombre}</Text>
+                  <Text style={styles.cardCodigo}>{item.codigo}</Text>
                 </View>
               </View>
-            );
-          }}
+
+              <View style={styles.divider} />
+
+              <View style={styles.btnGrid}>
+                <TouchableOpacity
+                  style={[styles.btn, styles.btnPrimary]}
+                  onPress={() => navigation.navigate('SeleccionarPeriodo', { materiaId: item.id, materiaNombre: item.nombre, modo: 'calificar' })}
+                >
+                  <Text style={[styles.btnText, styles.btnTextPrimary]}>Calificar</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.btn, styles.btnSuccess]}
+                  onPress={() => navigation.navigate('SeleccionarPeriodo', { materiaId: item.id, materiaNombre: item.nombre, modo: 'asistencia' })}
+                >
+                  <Text style={[styles.btnText, styles.btnTextSuccess]}>Asistencia</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.btn, styles.btnNeutral]}
+                  onPress={() => navigation.navigate('SeleccionarPeriodo', { materiaId: item.id, materiaNombre: item.nombre, modo: 'planilla' })}
+                >
+                  <Text style={[styles.btnText, styles.btnTextNeutral]}>Planilla</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.btn, styles.btnIA]}
+                  onPress={() => navigation.navigate('SeleccionarPeriodo', { materiaId: item.id, materiaNombre: item.nombre, modo: 'calificarIA' })}
+                >
+                  <Text style={[styles.btnText, styles.btnTextIA]}>Calif. con IA</Text>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={styles.btnRiesgo}
+                onPress={() => navigation.navigate('SeleccionarPeriodo', { materiaId: item.id, materiaNombre: item.nombre, modo: 'riesgoIA' })}
+              >
+                <Text style={styles.btnRiesgoText}>Análisis de Riesgo IA</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         />
       )}
     </View>
@@ -226,93 +216,134 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#EEF2F7' },
-  loadingContainer: { flex: 1, backgroundColor: '#0d2240', justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 14, color: '#94a3b8', fontSize: 15 },
+  flex: { flex: 1, backgroundColor: '#F1F5F9' },
+  loadingContainer: { flex: 1, backgroundColor: '#1E3A5F', justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 14, color: '#94A3B8', fontSize: 15 },
 
-  // Header
-  header: { backgroundColor: '#0d2240', paddingHorizontal: 20, paddingTop: 48, paddingBottom: 20 },
-  headerTop: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  // ── Header ──────────────────────────────────────────────────────────────────
+  header: {
+    backgroundColor: '#1E3A5F',
+    paddingHorizontal: 20,
+    paddingTop: 48,
+    paddingBottom: 20,
+  },
+  headerTop: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
   avatarWrap: {
-    width: 48, height: 48, borderRadius: 24,
-    backgroundColor: '#D97757', justifyContent: 'center', alignItems: 'center',
-    marginRight: 12, borderWidth: 2, borderColor: '#FCCCA8',
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: '#2563EB',
+    justifyContent: 'center', alignItems: 'center', marginRight: 12,
   },
-  avatarText: { color: '#fff', fontSize: 18, fontWeight: '800' },
+  avatarText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   headerInfo: { flex: 1 },
-  headerLabel: { fontSize: 12, color: '#64748b', fontWeight: '500' },
-  headerNombre: { fontSize: 18, fontWeight: '800', color: '#fff', marginTop: 1 },
+  headerLabel: { fontSize: 11, color: '#94A3B8', fontWeight: '500', letterSpacing: 0.5 },
+  headerNombre: { fontSize: 17, fontWeight: '700', color: '#FFFFFF', marginTop: 1 },
   headerAcciones: { flexDirection: 'row', gap: 8 },
-  btnIcono: {
-    width: 38, height: 38, borderRadius: 19,
-    backgroundColor: 'rgba(255,255,255,0.12)', justifyContent: 'center', alignItems: 'center',
+  headerBtn: {
+    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
-  btnSalir: { backgroundColor: 'rgba(239,68,68,0.25)' },
-  btnIconoEmoji: { fontSize: 18 },
+  headerBtnSalir: { backgroundColor: 'rgba(220,38,38,0.25)' },
+  headerBtnText: { color: '#E2E8F0', fontSize: 12, fontWeight: '600' },
 
   statsRow: { flexDirection: 'row', gap: 10 },
-  statBadge: {
+  statItem: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 20,
-    paddingHorizontal: 12, paddingVertical: 6,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7,
   },
-  statBadgeAlt: { backgroundColor: 'rgba(217,119,87,0.25)' },
-  statNum: { fontSize: 14, fontWeight: '800', color: '#fff' },
-  statLabel: { fontSize: 12, color: '#94a3b8' },
+  statItemActive: { backgroundColor: 'rgba(37,99,235,0.3)' },
+  statNum: { fontSize: 14, fontWeight: '800', color: '#FFFFFF' },
+  statNumActive: { color: '#93C5FD' },
+  statLabel: { fontSize: 12, color: '#64748B' },
+  statLabelActive: { color: '#BFDBFE' },
 
-  // Lista
-  lista: { padding: 16, paddingBottom: 32 },
-  seccionTitulo: { fontSize: 13, fontWeight: '700', color: '#64748b', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 },
+  // ── Lista ───────────────────────────────────────────────────────────────────
+  lista: { padding: 16, paddingBottom: 40 },
+  seccionLabel: {
+    fontSize: 11, fontWeight: '700', color: '#94A3B8',
+    letterSpacing: 1.2, textTransform: 'uppercase',
+    marginBottom: 12,
+  },
 
-  // Vacío
-  emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
-  emptyIcon: { fontSize: 48, marginBottom: 12 },
-  emptyText: { fontSize: 16, color: '#6b7280', marginBottom: 20, textAlign: 'center' },
-  retryBtn: { backgroundColor: '#1a3a6b', paddingHorizontal: 28, paddingVertical: 12, borderRadius: 10 },
-  retryText: { color: '#fff', fontWeight: '700' },
+  // ── Vacío ───────────────────────────────────────────────────────────────────
+  emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 36 },
+  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#1E293B', marginBottom: 8 },
+  emptyDesc: { fontSize: 14, color: '#64748B', textAlign: 'center', marginBottom: 24 },
+  retryBtn: {
+    backgroundColor: '#1E3A5F', paddingHorizontal: 28, paddingVertical: 12, borderRadius: 8,
+  },
+  retryText: { color: '#FFFFFF', fontWeight: '600' },
 
-  // Tarjeta
+  // ── Tarjeta ─────────────────────────────────────────────────────────────────
   card: {
-    backgroundColor: '#fff', borderRadius: 16, marginBottom: 14,
-    flexDirection: 'row', overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 8,
-    elevation: 4,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    marginBottom: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  cardAccent: { width: 5 },
-  cardBody: { flex: 1, padding: 16 },
-  cardTitleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
-  cardIconCircle: { width: 42, height: 42, borderRadius: 21, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  cardIconText: { fontSize: 18, fontWeight: '800', color: '#1f2937' },
-  cardTitleInfo: { flex: 1 },
-  materiaNombre: { fontSize: 16, fontWeight: '700', color: '#111827' },
-  materiaCodigo: { fontSize: 12, color: '#9ca3af', marginTop: 2 },
-
-  // Botones 2x2
-  btnGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  btnAccion: {
-    width: '47%', borderRadius: 10, paddingVertical: 11, paddingHorizontal: 8,
-    alignItems: 'center', justifyContent: 'center',
+  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
+  cardIconWrap: {
+    width: 40, height: 40, borderRadius: 10,
+    backgroundColor: '#EFF6FF',
+    justifyContent: 'center', alignItems: 'center', marginRight: 12,
   },
-  btnIA: { backgroundColor: '#D97757' },
-  btnAccionIcon: { fontSize: 18, marginBottom: 3 },
-  btnAccionText: { color: '#fff', fontWeight: '700', fontSize: 12 },
+  cardIconText: { fontSize: 18, fontWeight: '800', color: '#2563EB' },
+  cardTitleWrap: { flex: 1 },
+  cardNombre: { fontSize: 16, fontWeight: '700', color: '#0F172A' },
+  cardCodigo: { fontSize: 12, color: '#94A3B8', marginTop: 2 },
 
-  // Riesgo IA
+  divider: { height: 1, backgroundColor: '#F1F5F9', marginBottom: 12 },
+
+  // ── Botones 2×2 ─────────────────────────────────────────────────────────────
+  btnGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+  btn: {
+    width: '47.5%',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  btnText: { fontSize: 13, fontWeight: '600' },
+
+  btnPrimary:     { backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' },
+  btnTextPrimary: { color: '#2563EB' },
+
+  btnSuccess:     { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0' },
+  btnTextSuccess: { color: '#16A34A' },
+
+  btnNeutral:     { backgroundColor: '#F8FAFC', borderColor: '#E2E8F0' },
+  btnTextNeutral: { color: '#475569' },
+
+  btnIA:          { backgroundColor: '#FDF4FF', borderColor: '#E9D5FF' },
+  btnTextIA:      { color: '#7C3AED' },
+
+  // ── Riesgo (full width) ─────────────────────────────────────────────────────
   btnRiesgo: {
-    marginTop: 8, borderRadius: 10, paddingVertical: 10,
-    backgroundColor: '#4c1d95', flexDirection: 'row',
-    alignItems: 'center', justifyContent: 'center', gap: 6,
+    paddingVertical: 10, borderRadius: 8,
+    backgroundColor: '#F5F3FF', borderWidth: 1, borderColor: '#DDD6FE',
+    alignItems: 'center',
   },
-  btnRiesgoText: { color: '#ddd6fe', fontWeight: '700', fontSize: 13 },
+  btnRiesgoText: { fontSize: 13, fontWeight: '600', color: '#7C3AED' },
 
-  // Boletín
+  // ── Boletín footer ──────────────────────────────────────────────────────────
   botonBoletin: {
-    backgroundColor: '#0d2240', borderRadius: 14,
-    paddingVertical: 16, paddingHorizontal: 20,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-    marginTop: 4, marginBottom: 8, elevation: 3,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 6,
+    backgroundColor: '#1E3A5F',
+    borderRadius: 12,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
+    marginBottom: 8,
   },
-  botonBoletinIcon: { fontSize: 20 },
-  botonBoletinTexto: { color: '#fff', fontWeight: '800', fontSize: 16 },
+  botonBoletinTexto: { color: '#FFFFFF', fontWeight: '700', fontSize: 15 },
+  botonBoletinFlecha: { color: '#93C5FD', fontSize: 20, fontWeight: '600' },
 });
