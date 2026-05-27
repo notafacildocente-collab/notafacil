@@ -53,7 +53,8 @@ export default function LoginScreen({ onLogin, navigation }: any) {
       const data = await response.json();
 
       if (!response.ok) {
-        Alert.alert('Error', data.message || 'Credenciales incorrectas');
+        const msg = Array.isArray(data.message) ? data.message[0] : (data.message || 'Credenciales incorrectas');
+        Alert.alert('Error', msg);
         return;
       }
 
