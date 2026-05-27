@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
   Modal, TextInput, Alert, ActivityIndicator,
-  StyleSheet, Platform,
+  StyleSheet, Platform, Image,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
@@ -57,6 +57,7 @@ export default function CalificacionScreen() {
   const [loadingDescripcion, setLoadingDescripcion] = useState(false);
   const [calificandoIA, setCalificandoIA] = useState(false);
   const [sugerenciaIA, setSugerenciaIA] = useState<SugerenciaIA | null>(null);
+  const [imagenesIA, setImagenesIA] = useState<Array<{base64: string; mimeType: string}>>([]);
 
   useEffect(() => {
     const cargarDatosIniciales = async () => {
@@ -158,6 +159,7 @@ export default function CalificacionScreen() {
       setValorInput('');
       setDescripcionInput('');
       setSugerenciaIA(null);
+      setImagenesIA([]);
       setModalVisible(false);
     } catch (error: any) {
       if (error.message !== 'Sesión vencida') {
@@ -193,6 +195,7 @@ export default function CalificacionScreen() {
     setDesempenoSeleccionado(desempeno);
     setValorInput('');
     setSugerenciaIA(null);
+    setImagenesIA([]);
     setDescripcionSugerida(null);
     setModalVisible(true);
 
@@ -220,35 +223,31 @@ export default function CalificacionScreen() {
     }
   };
 
-  const pickImageYCalificar = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(
-        'Permiso requerido',
-        'Necesitamos acceso a la cámara para calificar con IA.',
-        [{ text: 'OK' }],
-      );
+  const agregarImagenIA = async () => {
+    if (imagenesIA.length >= 2) {
+      Alert.alert('Máximo 2 imágenes', 'Ya tienes las 2 páginas del examen agregadas.');
       return;
     }
-
-    Alert.alert('Calificar con IA', '¿Cómo quieres obtener la imagen del trabajo?', [
-      {
-        text: 'Cámara',
-        onPress: () => tomarFoto('camera'),
-      },
-      {
-        text: 'Galería',
-        onPress: () => tomarFoto('gallery'),
-      },
-      { text: 'Cancelar', style: 'cancel' },
-    ]);
+    Alert.alert(
+      imagenesIA.length === 0 ? 'Agregar imagen del examen' : 'Agregar reverso del examen',
+      '¿Cómo quieres obtener la imagen?',
+      [
+        { text: 'Cámara', onPress: () => capturarImagen('camera') },
+        { text: 'Galería', onPress: () => capturarImagen('gallery') },
+        { text: 'Cancelar', style: 'cancel' },
+      ],
+    );
   };
 
-  const tomarFoto = async (fuente: 'camera' | 'gallery') => {
+  const capturarImagen = async (fuente: 'camera' | 'gallery') => {
     try {
       let result: ImagePicker.ImagePickerResult;
-
       if (fuente === 'camera') {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permiso requerido', 'Necesitamos acceso a la cámara.');
+          return;
+        }
         result = await ImagePicker.launchCameraAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
           quality: 0.7,
@@ -266,38 +265,31 @@ export default function CalificacionScreen() {
           base64: true,
         });
       }
-
       if (result.canceled || !result.assets?.[0]?.base64) return;
-
       const asset = result.assets[0];
-      const mimeType = asset.mimeType || 'image/jpeg';
-      await enviarImagenAIA(asset.base64!, mimeType);
+      setImagenesIA((prev) => [...prev, { base64: asset.base64!, mimeType: asset.mimeType || 'image/jpeg' }]);
     } catch (error) {
       Alert.alert('Error', 'No se pudo obtener la imagen');
     }
   };
 
-  const enviarImagenAIA = async (base64: string, mimeType: string) => {
-    if (!desempenoSeleccionado) return;
+  const analizarConIA = async () => {
+    if (!desempenoSeleccionado || imagenesIA.length === 0) return;
     try {
       setCalificandoIA(true);
       setSugerenciaIA(null);
-
       const res = await apiFetch('/api/notas/calificar-ia', {
         method: 'POST',
         body: JSON.stringify({
           asignacionId,
           desempenoId: desempenoSeleccionado.id,
-          imagenBase64: base64,
-          mimeType,
+          imagenes: imagenesIA,
         }),
       });
-
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.message || 'Error al calificar con IA');
       }
-
       const data: SugerenciaIA = await res.json();
       setSugerenciaIA(data);
       setValorInput(data.notaSugerida.toFixed(1));
@@ -428,18 +420,53 @@ export default function CalificacionScreen() {
             </Text>
             <Text style={styles.modalSubtitulo}>{estudianteActivo?.nombre} {estudianteActivo?.apellido}</Text>
 
-            {/* Botón calificar con IA */}
+            {/* Botón agregar imagen para IA */}
             <TouchableOpacity
-              style={[styles.botonIA, calificandoIA && styles.botonDisabled]}
-              onPress={pickImageYCalificar}
-              disabled={calificandoIA || saving}
+              style={[styles.botonIA, (imagenesIA.length >= 2 || calificandoIA || saving) && styles.botonDisabled]}
+              onPress={agregarImagenIA}
+              disabled={imagenesIA.length >= 2 || calificandoIA || saving}
             >
-              {calificandoIA ? (
-                <ActivityIndicator size="small" color="#7c3aed" />
-              ) : (
-                <Text style={styles.botonIAText}>Calificar con IA</Text>
-              )}
+              <Text style={styles.botonIAText}>
+                {imagenesIA.length === 0
+                  ? '📷 Calificar con IA'
+                  : imagenesIA.length === 1
+                  ? '📷 Agregar reverso (opcional)'
+                  : '✓ 2 imágenes listas'}
+              </Text>
             </TouchableOpacity>
+
+            {/* Miniaturas + botón analizar */}
+            {imagenesIA.length > 0 && (
+              <View style={styles.thumbnailsRow}>
+                {imagenesIA.map((img, idx) => (
+                  <View key={idx} style={styles.thumbnailContainer}>
+                    <Image
+                      source={{ uri: `data:${img.mimeType};base64,${img.base64}` }}
+                      style={styles.thumbnail}
+                    />
+                    <TouchableOpacity
+                      style={styles.thumbnailRemove}
+                      onPress={() => setImagenesIA((prev) => prev.filter((_, i) => i !== idx))}
+                      disabled={calificandoIA}
+                    >
+                      <Text style={styles.thumbnailRemoveText}>✕</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.thumbnailLabel}>{idx === 0 ? 'Frente' : 'Reverso'}</Text>
+                  </View>
+                ))}
+                <TouchableOpacity
+                  style={[styles.botonAnalizar, calificandoIA && styles.botonDisabled]}
+                  onPress={analizarConIA}
+                  disabled={calificandoIA || saving}
+                >
+                  {calificandoIA ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Text style={styles.botonAnalizarText}>{'Analizar\ncon IA'}</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
 
             {/* Sugerencia de la IA */}
             {sugerenciaIA && (
@@ -488,7 +515,7 @@ export default function CalificacionScreen() {
             <View style={styles.modalBotones}>
               <TouchableOpacity
                 style={[styles.botonModal, styles.botonCancelar]}
-                onPress={() => { setModalVisible(false); setSugerenciaIA(null); }}
+                onPress={() => { setModalVisible(false); setSugerenciaIA(null); setImagenesIA([]); }}
                 disabled={saving}
               >
                 <Text style={styles.botonCancelarText}>Cancelar</Text>
@@ -558,8 +585,16 @@ const styles = StyleSheet.create({
   modalSheet: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24 },
   modalTitulo: { fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 4 },
   modalSubtitulo: { fontSize: 14, color: '#6b7280', marginBottom: 16 },
-  botonIA: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f5f3ff', borderWidth: 1.5, borderColor: '#7c3aed', borderRadius: 10, paddingVertical: 11, marginBottom: 12, gap: 8 },
+  botonIA: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f5f3ff', borderWidth: 1.5, borderColor: '#7c3aed', borderRadius: 10, paddingVertical: 11, marginBottom: 8, gap: 8 },
   botonIAText: { color: '#7c3aed', fontWeight: '700', fontSize: 14 },
+  thumbnailsRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12, paddingHorizontal: 4 },
+  thumbnailContainer: { alignItems: 'center', position: 'relative' },
+  thumbnail: { width: 68, height: 68, borderRadius: 8, borderWidth: 1.5, borderColor: '#a78bfa' },
+  thumbnailRemove: { position: 'absolute', top: -7, right: -7, backgroundColor: '#ef4444', borderRadius: 10, width: 20, height: 20, justifyContent: 'center', alignItems: 'center' },
+  thumbnailRemoveText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  thumbnailLabel: { fontSize: 10, color: '#7c3aed', fontWeight: '600', marginTop: 4 },
+  botonAnalizar: { flex: 1, backgroundColor: '#7c3aed', borderRadius: 10, paddingVertical: 12, alignItems: 'center', justifyContent: 'center', minHeight: 68 },
+  botonAnalizarText: { color: '#fff', fontWeight: '700', fontSize: 13, textAlign: 'center', lineHeight: 18 },
   sugerenciaCard: { backgroundColor: '#faf5ff', borderWidth: 1.5, borderColor: '#a78bfa', borderRadius: 10, padding: 12, marginBottom: 12 },
   sugerenciaHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   sugerenciaLabel: { fontSize: 11, fontWeight: '700', color: '#7c3aed', textTransform: 'uppercase', letterSpacing: 0.5 },
