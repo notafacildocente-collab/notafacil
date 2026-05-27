@@ -5,19 +5,21 @@ import {
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { apiFetch } from '../services/api';
-import { exportarBoletinPDF } from '../services/exportarPDF';
+import { exportarBoletinPDF, exportarBoletinIndividualPDF } from '../services/exportarPDF';
 
 const CELDA_NOMBRE = 160;
 const CELDA_NOTA = 52;
 const CELDA_FALTAS = 38;
 const CELDA_PROM = 58;
 const CELDA_PUESTO = 38;
+const CELDA_PDF = 38;
 
 export default function BoletinScreen() {
   const route = useRoute();
   const { cursoId, periodoId, periodoNumero, cursoNombre } = (route.params || {}) as any;
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [generandoPDF, setGenerandoPDF] = useState<string | null>(null);
 
   useEffect(() => { cargar(); }, []);
 
@@ -31,6 +33,24 @@ export default function BoletinScreen() {
       Alert.alert('Error', 'No se pudo cargar el boletín');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePDFIndividual = async (est: any) => {
+    try {
+      setGenerandoPDF(est.estudianteId);
+      const res = await apiFetch(
+        `/api/notas/boletin-individual/${est.estudianteId}?periodoId=${periodoId}&cursoId=${cursoId}`,
+      );
+      if (!res.ok) throw new Error('Error al obtener datos');
+      const boletinData = await res.json();
+      await exportarBoletinIndividualPDF(boletinData, est.puesto);
+    } catch (error: any) {
+      if (error.message !== 'Sesión vencida') {
+        Alert.alert('Error', 'No se pudo generar el PDF individual');
+      }
+    } finally {
+      setGenerandoPDF(null);
     }
   };
 
@@ -76,6 +96,7 @@ export default function BoletinScreen() {
             ))}
             <Text style={[styles.enc, { width: CELDA_FALTAS, color: '#b45309' }]}>F</Text>
             <Text style={[styles.enc, { width: CELDA_PROM, backgroundColor: '#dcfce7', color: '#065f46' }]}>Prom.</Text>
+            <Text style={[styles.enc, { width: CELDA_PDF, backgroundColor: '#faf5ff', color: '#7c3aed' }]}>PDF</Text>
           </View>
 
           {/* Filas estudiantes */}
@@ -115,6 +136,17 @@ export default function BoletinScreen() {
                 ]}>
                   {est.promedio === 0 ? '—' : est.promedio.toFixed(1)}
                 </Text>
+                {/* PDF Individual */}
+                <TouchableOpacity
+                  style={[styles.celda, styles.pdfBtn, { width: CELDA_PDF }]}
+                  onPress={() => handlePDFIndividual(est)}
+                  disabled={generandoPDF === est.estudianteId}
+                >
+                  {generandoPDF === est.estudianteId
+                    ? <ActivityIndicator size="small" color="#7c3aed" />
+                    : <Text style={{ fontSize: 16 }}>📄</Text>
+                  }
+                </TouchableOpacity>
               </View>
             ))}
           </ScrollView>
@@ -171,6 +203,7 @@ const styles = StyleSheet.create({
   notaVacia: { color: '#d1d5db' },
   faltasTxt: { textAlign: 'center', color: '#9ca3af' },
   promTxt: { textAlign: 'center', fontWeight: '800', fontSize: 13, color: '#059669' },
+  pdfBtn: { justifyContent: 'center', alignItems: 'center', paddingVertical: 9 },
   exportBtn: {
     backgroundColor: '#1a3a6b', marginHorizontal: 12, marginVertical: 6,
     paddingVertical: 10, borderRadius: 8, alignItems: 'center',

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
   Modal, TextInput, Alert, ActivityIndicator,
-  StyleSheet, Platform, Image,
+  StyleSheet, Platform, Image, Linking,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
@@ -13,6 +13,7 @@ interface Estudiante {
   nombre: string;
   apellido: string;
   numeroDocumento: string;
+  telefonoAcudiente?: string | null;
 }
 
 interface Desempeno {
@@ -59,6 +60,10 @@ export default function CalificacionScreen() {
   const [calificandoIA, setCalificandoIA] = useState(false);
   const [sugerenciaIA, setSugerenciaIA] = useState<SugerenciaIA | null>(null);
   const [imagenesIA, setImagenesIA] = useState<Array<{base64: string; mimeType: string}>>([]);
+  // Teléfono acudiente
+  const [modalTelefono, setModalTelefono] = useState(false);
+  const [telefonoInput, setTelefonoInput] = useState('');
+  const [guardandoTelefono, setGuardandoTelefono] = useState(false);
 
   useEffect(() => {
     const cargarDatosIniciales = async () => {
@@ -155,13 +160,29 @@ export default function CalificacionScreen() {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.message || 'Error al guardar');
       }
-      const notaNueva: Nota = await res.json();
+      const notaNueva: any = await res.json();
       setNotas((prev) => [{ ...notaNueva, valor: parseFloat(String(notaNueva.valor)) }, ...prev]);
       setValorInput('');
       setDescripcionInput('');
       setSugerenciaIA(null);
       setImagenesIA([]);
       setModalVisible(false);
+      // Notificación WhatsApp si el acudiente tiene teléfono registrado
+      if (notaNueva.waLink) {
+        Alert.alert(
+          '✅ Nota guardada',
+          `¿Enviar notificación a acudiente de ${estudianteActivo?.nombre}?`,
+          [
+            { text: 'No', style: 'cancel' },
+            {
+              text: '📱 Enviar WhatsApp',
+              onPress: () => Linking.openURL(notaNueva.waLink).catch(() => {
+                Alert.alert('Error', 'No se pudo abrir WhatsApp');
+              }),
+            },
+          ],
+        );
+      }
     } catch (error: any) {
       if (error.message !== 'Sesión vencida') {
         Alert.alert('Error', error.message || 'No se pudo guardar la nota');
@@ -303,6 +324,33 @@ export default function CalificacionScreen() {
     }
   };
 
+  const handleGuardarTelefono = async () => {
+    if (!estudianteActivo) return;
+    try {
+      setGuardandoTelefono(true);
+      const tel = telefonoInput.trim() || null;
+      const res = await apiFetch(`/api/notas/estudiantes/${estudianteActivo.id}/telefono`, {
+        method: 'PUT',
+        body: JSON.stringify({ telefonoAcudiente: tel }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Error al guardar');
+      }
+      // Actualizar estado local
+      setEstudiantes((prev) =>
+        prev.map((e) => e.id === estudianteActivo.id ? { ...e, telefonoAcudiente: tel } : e),
+      );
+      setEstudianteActivo((prev) => prev ? { ...prev, telefonoAcudiente: tel } : prev);
+      setModalTelefono(false);
+      Alert.alert(tel ? '✅ Teléfono guardado' : '✅ Teléfono eliminado', '');
+    } catch (error: any) {
+      if (error.message !== 'Sesión vencida') Alert.alert('Error', error.message || 'No se pudo guardar');
+    } finally {
+      setGuardandoTelefono(false);
+    }
+  };
+
   if (loadingInicial) {
     return (
       <View style={styles.centerContainer}>
@@ -367,9 +415,19 @@ export default function CalificacionScreen() {
 
       <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollPadding}>
         <View style={styles.estudianteCard}>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.estudianteNombre}>{estudianteActivo?.nombre} {estudianteActivo?.apellido}</Text>
-            <Text style={styles.estudianteDoc}>{estudianteActivo?.numeroDocumento}</Text>
+            <View style={styles.estudianteDocRow}>
+              <Text style={styles.estudianteDoc}>{estudianteActivo?.numeroDocumento}</Text>
+              <TouchableOpacity
+                style={styles.telefonoBtn}
+                onPress={() => { setTelefonoInput(estudianteActivo?.telefonoAcudiente || ''); setModalTelefono(true); }}
+              >
+                <Text style={styles.telefonoBtnText}>
+                  {estudianteActivo?.telefonoAcudiente ? `📱 ${estudianteActivo.telefonoAcudiente}` : '📱 + Teléfono'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
           <View style={[styles.notaFinalBadge, { backgroundColor: aprobado ? '#10b981' : '#ef4444' }]}>
             <Text style={styles.notaFinalLabel}>Final</Text>
@@ -551,6 +609,56 @@ export default function CalificacionScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* ── Modal teléfono acudiente ── */}
+      <Modal visible={modalTelefono} animationType="fade" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalSheet, { paddingBottom: Platform.OS === 'ios' ? 40 : 24 }]}>
+            <Text style={styles.modalTitulo}>📱 Teléfono del Acudiente</Text>
+            <Text style={styles.modalSubtitulo}>{estudianteActivo?.nombre} {estudianteActivo?.apellido}</Text>
+            <Text style={styles.inputLabel}>Número de WhatsApp (ej: 3001234567)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="3001234567"
+              keyboardType="phone-pad"
+              value={telefonoInput}
+              onChangeText={setTelefonoInput}
+              maxLength={15}
+            />
+            <Text style={{ fontSize: 11, color: '#9ca3af', marginTop: 6 }}>
+              Al registrar el teléfono, recibirás opción de enviar WhatsApp al guardar cada nota.
+            </Text>
+            <View style={styles.modalBotones}>
+              <TouchableOpacity
+                style={[styles.botonModal, styles.botonCancelar]}
+                onPress={() => setModalTelefono(false)}
+                disabled={guardandoTelefono}
+              >
+                <Text style={styles.botonCancelarText}>Cancelar</Text>
+              </TouchableOpacity>
+              {telefonoInput.trim() !== '' && estudianteActivo?.telefonoAcudiente && (
+                <TouchableOpacity
+                  style={[styles.botonModal, { backgroundColor: '#fee2e2' }]}
+                  onPress={() => { setTelefonoInput(''); }}
+                  disabled={guardandoTelefono}
+                >
+                  <Text style={{ color: '#dc2626', fontWeight: '600' }}>Quitar</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={[styles.botonModal, styles.botonGuardar, guardandoTelefono && styles.botonDisabled]}
+                onPress={handleGuardarTelefono}
+                disabled={guardandoTelefono}
+              >
+                {guardandoTelefono
+                  ? <ActivityIndicator size="small" color="#fff" />
+                  : <Text style={styles.botonGuardarText}>Guardar</Text>
+                }
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -579,7 +687,10 @@ const styles = StyleSheet.create({
   scrollPadding: { padding: 16 },
   estudianteCard: { backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', elevation: 2 },
   estudianteNombre: { fontSize: 16, fontWeight: '700', color: '#111827' },
-  estudianteDoc: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  estudianteDocRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginTop: 2 },
+  estudianteDoc: { fontSize: 12, color: '#6b7280' },
+  telefonoBtn: { backgroundColor: '#f0fdf4', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, borderWidth: 1, borderColor: '#bbf7d0' },
+  telefonoBtnText: { fontSize: 11, color: '#059669', fontWeight: '600' },
   notaFinalBadge: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, alignItems: 'center' },
   notaFinalLabel: { color: '#fff', fontSize: 10, fontWeight: '600' },
   notaFinalValor: { color: '#fff', fontSize: 28, fontWeight: '800', lineHeight: 32 },

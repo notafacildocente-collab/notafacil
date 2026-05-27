@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, ActivityIndicator, Alert,
+  StyleSheet, ActivityIndicator, Alert, Image,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { apiFetch } from '../services/api';
 import { cerrarSesionGlobal } from '../services/auth';
 
@@ -32,6 +33,8 @@ export default function RectorScreen({ navigation }: any) {
   const [resumen, setResumen] = useState<Resumen | null>(null);
   const [loading, setLoading] = useState(true);
   const [accionando, setAccionando] = useState(false);
+  const [logoActual, setLogoActual] = useState<string | null>(null);
+  const [logoLoading, setLogoLoading] = useState(false);
 
   const cerrarSesion = () => {
     Alert.alert(
@@ -55,21 +58,58 @@ export default function RectorScreen({ navigation }: any) {
   const cargarDatos = async () => {
     try {
       setLoading(true);
-      const [resPeriodos, resProfesores, resResumen] = await Promise.all([
+      const [resPeriodos, resProfesores, resResumen, resLogo] = await Promise.all([
         apiFetch('/api/rector/periodos'),
         apiFetch('/api/rector/profesores'),
         apiFetch('/api/rector/reportes/resumen'),
+        apiFetch('/api/rector/logo'),
       ]);
 
       if (resPeriodos.ok) setPeriodos(await resPeriodos.json());
       if (resProfesores.ok) setProfesores(await resProfesores.json());
       if (resResumen.ok) setResumen(await resResumen.json());
+      if (resLogo.ok) { const logoData = await resLogo.json(); setLogoActual(logoData.logoUrl); }
     } catch (error: any) {
       if (error.message !== 'Sesión vencida') {
         Alert.alert('Error', 'No se pudieron cargar los datos');
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSubirLogo = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permiso requerido', 'Necesitamos acceso a la galería de fotos.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+      base64: true,
+      allowsEditing: true,
+      aspect: [4, 2],
+    });
+    if (result.canceled || !result.assets?.[0]?.base64) return;
+    const asset = result.assets[0];
+    const logoBase64 = `data:${asset.mimeType || 'image/jpeg'};base64,${asset.base64}`;
+    try {
+      setLogoLoading(true);
+      const res = await apiFetch('/api/rector/logo', {
+        method: 'PUT',
+        body: JSON.stringify({ logoBase64 }),
+      });
+      if (res.ok) {
+        setLogoActual(logoBase64);
+        Alert.alert('✅ Logo actualizado', 'El logo del colegio se actualizó correctamente.');
+      } else {
+        Alert.alert('Error', 'No se pudo actualizar el logo');
+      }
+    } catch (error: any) {
+      if (error.message !== 'Sesión vencida') Alert.alert('Error', 'No se pudo conectar al servidor');
+    } finally {
+      setLogoLoading(false);
     }
   };
 
@@ -184,6 +224,30 @@ export default function RectorScreen({ navigation }: any) {
           </View>
         </View>
       )}
+
+      {/* Logo del colegio */}
+      <Text style={styles.seccionTitulo}>Logo del Colegio</Text>
+      <View style={styles.logoCard}>
+        {logoActual ? (
+          <Image source={{ uri: logoActual }} style={styles.logoPreview} resizeMode="contain" />
+        ) : (
+          <View style={styles.logoPlaceholder}>
+            <Text style={styles.logoPlaceholderIcon}>🏫</Text>
+            <Text style={styles.logoPlaceholderText}>Sin logo</Text>
+          </View>
+        )}
+        <TouchableOpacity
+          style={[styles.logoBtn, logoLoading && { opacity: 0.6 }]}
+          onPress={handleSubirLogo}
+          disabled={logoLoading}
+        >
+          {logoLoading
+            ? <ActivityIndicator size="small" color="#fff" />
+            : <Text style={styles.logoBtnText}>📷 {logoActual ? 'Cambiar logo' : 'Subir logo'}</Text>
+          }
+        </TouchableOpacity>
+        <Text style={styles.logoHint}>El logo aparecerá en los boletines individuales PDF</Text>
+      </View>
 
       {/* Períodos */}
       <Text style={styles.seccionTitulo}>Períodos</Text>
@@ -304,4 +368,19 @@ headerBar: {
     paddingVertical: 8, borderRadius: 8,
   },
   botonSalirTexto: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  // Logo
+  logoCard: {
+    backgroundColor: '#fff', borderRadius: 12, padding: 16,
+    marginBottom: 18, elevation: 2, alignItems: 'center',
+  },
+  logoPreview: { width: 180, height: 80, marginBottom: 12 },
+  logoPlaceholder: { alignItems: 'center', marginBottom: 12 },
+  logoPlaceholderIcon: { fontSize: 36 },
+  logoPlaceholderText: { fontSize: 12, color: '#9ca3af', marginTop: 4 },
+  logoBtn: {
+    backgroundColor: '#1a3a6b', paddingHorizontal: 24, paddingVertical: 10,
+    borderRadius: 8, minWidth: 140, alignItems: 'center',
+  },
+  logoBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  logoHint: { fontSize: 11, color: '#9ca3af', marginTop: 8, textAlign: 'center' },
 });

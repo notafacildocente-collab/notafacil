@@ -206,6 +206,15 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
                       <Text style={styles.btnAccionText}>Calif. IA</Text>
                     </TouchableOpacity>
                   </View>
+
+                  {/* Botón Riesgo IA — fila completa */}
+                  <TouchableOpacity
+                    style={styles.btnRiesgo}
+                    onPress={() => navigation.navigate('SeleccionarPeriodo', { materiaId: item.id, materiaNombre: item.nombre, modo: 'riesgoIA' })}
+                  >
+                    <Text style={styles.btnAccionIcon}>🚦</Text>
+                    <Text style={styles.btnRiesgoText}>Análisis de Riesgo IA</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             );
@@ -287,6 +296,14 @@ const styles = StyleSheet.create({
   btnIA: { backgroundColor: '#D97757' },
   btnAccionIcon: { fontSize: 18, marginBottom: 3 },
   btnAccionText: { color: '#fff', fontWeight: '700', fontSize: 12 },
+
+  // Riesgo IA
+  btnRiesgo: {
+    marginTop: 8, borderRadius: 10, paddingVertical: 10,
+    backgroundColor: '#4c1d95', flexDirection: 'row',
+    alignItems: 'center', justifyContent: 'center', gap: 6,
+  },
+  btnRiesgoText: { color: '#ddd6fe', fontWeight: '700', fontSize: 13 },
 
   // Boletín
   botonBoletin: {
