@@ -43,7 +43,8 @@ export default function SeleccionarPeriodoScreen({ navigation, route }: any) {
   };
 
   const handleSeleccionarPeriodo = async (periodo: Periodo) => {
-    if (periodo.cerrado) {
+    // El modo 'reporte' permite ver el reporte aunque el período esté cerrado
+    if (periodo.cerrado && modo !== 'reporte') {
       Alert.alert('Periodo cerrado', 'Este periodo no permite modificaciones.');
       return;
     }
@@ -58,18 +59,21 @@ export default function SeleccionarPeriodoScreen({ navigation, route }: any) {
         Alert.alert('Sin asignacion', err.message || 'No tienes asignacion para este periodo.');
         return;
       }
-      const { asignacionId } = await response.json();
+      const { asignacionId, cursoId } = await response.json();
       const params = {
         asignacionId,
         materiaId,
         materiaNombre,
         periodoId: periodo.id,
         periodoNumero: periodo.numero,
+        cursoId,
       };
       if (modo === 'asistencia') {
         navigation.navigate('Asistencia', params);
       } else if (modo === 'planilla') {
         navigation.navigate('Planilla', params);
+      } else if (modo === 'reporte') {
+        navigation.navigate('Reporte', params);
       } else {
         navigation.navigate('Calificacion', params);
       }
@@ -110,7 +114,7 @@ export default function SeleccionarPeriodoScreen({ navigation, route }: any) {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={[styles.card, item.cerrado && styles.cardCerrado]}
+              style={[styles.card, item.cerrado && modo !== 'reporte' && styles.cardCerrado]}
               onPress={() => handleSeleccionarPeriodo(item)}
               disabled={navegando}
             >

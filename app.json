@@ -6,18 +6,32 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
-    "assetBundlePatterns": ["**/*"],
-    "ios": { "bundleIdentifier": "com.notafacil.docente" },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "splash": {
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "bundleIdentifier": "com.notafacil.docente"
+    },
     "android": {
       "package": "com.notafacil.docente",
+      "backgroundColor": "#ffffff",
       "permissions": [
         "android.permission.ACCESS_NETWORK_STATE",
         "android.permission.INTERNET"
       ]
     },
-    "plugins": ["expo-secure-store"],
+    "plugins": [
+      "expo-secure-store"
+    ],
     "scheme": "notafacil",
-    "extra": {},
+    "extra": {
+      "eas": {
+        "projectId": "c13ff982-c4aa-48e7-adac-1c3c212a5584"
+      }
+    },
     "owner": "sisas"
   }
 }
