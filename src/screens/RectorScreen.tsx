@@ -214,11 +214,11 @@ export default function RectorScreen({ navigation }: any) {
             <Text style={styles.resumenNumero}>{resumen.totalCursos}</Text>
             <Text style={styles.resumenLabel}>Cursos</Text>
           </View>
-          <View style={[styles.resumenCard, { backgroundColor: '#1a3a6b' }]}>
-            <Text style={[styles.resumenNumero, { color: '#fff', fontSize: 13 }]}>
+          <View style={[styles.resumenCard, { backgroundColor: '#1E3A5F', borderColor: '#1E3A5F' }]}>
+            <Text style={[styles.resumenNumero, { color: '#FFFFFF', fontSize: 13 }]}>
               {resumen.periodoActivo}
             </Text>
-            <Text style={[styles.resumenLabel, { color: '#93c5fd' }]}>Período Activo</Text>
+            <Text style={[styles.resumenLabel, { color: '#93C5FD' }]}>Período Activo</Text>
           </View>
         </View>
       )}
@@ -314,71 +314,87 @@ export default function RectorScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6', padding: 16 },
+  container: { flex: 1, backgroundColor: '#F1F5F9', padding: 16 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 12, color: '#6b7280' },
+  loadingText: { marginTop: 12, color: '#64748B' },
+
+  headerBar: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', marginBottom: 20,
+  },
+  headerTitulo: { fontSize: 20, fontWeight: '800', color: '#0F172A' },
+  botonSalir: {
+    backgroundColor: 'rgba(220,38,38,0.1)', paddingHorizontal: 14,
+    paddingVertical: 8, borderRadius: 8,
+    borderWidth: 1, borderColor: 'rgba(220,38,38,0.25)',
+  },
+  botonSalirTexto: { color: '#DC2626', fontWeight: '700', fontSize: 13 },
+
   resumenRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
   resumenCard: {
-    flex: 1, backgroundColor: '#fff', borderRadius: 12,
-    padding: 14, alignItems: 'center', elevation: 2,
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    elevation: 1,
   },
-  resumenNumero: { fontSize: 24, fontWeight: '800', color: '#1a3a6b' },
-  resumenLabel: { fontSize: 11, color: '#6b7280', marginTop: 4, fontWeight: '600' },
+  resumenNumero: { fontSize: 24, fontWeight: '800', color: '#1E3A5F' },
+  resumenLabel: { fontSize: 11, color: '#64748B', marginTop: 4, fontWeight: '600' },
+
   seccionTitulo: {
-    fontSize: 16, fontWeight: '700', color: '#1a3a6b',
+    fontSize: 12, fontWeight: '700', color: '#94A3B8',
+    letterSpacing: 1.2, textTransform: 'uppercase',
     marginBottom: 10, marginTop: 8,
   },
+
   periodoCard: {
-    backgroundColor: '#fff', borderRadius: 12, padding: 16,
-    marginBottom: 10, elevation: 2,
+    backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16,
+    marginBottom: 10, borderWidth: 1, borderColor: '#E2E8F0', elevation: 1,
   },
   periodoInfo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-  periodoNombre: { fontSize: 16, fontWeight: '700', color: '#1f2937' },
-  estadoBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  estadoBadgeText: { color: '#fff', fontSize: 12, fontWeight: '600' },
-  periodoFechas: { fontSize: 12, color: '#6b7280', marginBottom: 10 },
+  periodoNombre: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
+  estadoBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  estadoBadgeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '700' },
+  periodoFechas: { fontSize: 12, color: '#94A3B8', marginBottom: 10 },
   periodoAcciones: { flexDirection: 'row', justifyContent: 'flex-end' },
   accionBtn: { paddingHorizontal: 20, paddingVertical: 8, borderRadius: 8 },
-  abrirBtn: { backgroundColor: '#10b981' },
-  cerrarBtn: { backgroundColor: '#ef4444' },
-  accionBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  abrirBtn: { backgroundColor: '#16A34A' },
+  cerrarBtn: { backgroundColor: '#DC2626' },
+  accionBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
+
   profesorCard: {
-    backgroundColor: '#fff', borderRadius: 12, padding: 16,
-    marginBottom: 10, elevation: 2, flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16,
+    marginBottom: 10, borderWidth: 1, borderColor: '#E2E8F0',
+    elevation: 1, flexDirection: 'row', alignItems: 'center',
   },
   profesorAvatar: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: '#1a3a6b', alignItems: 'center', justifyContent: 'center',
+    width: 42, height: 42, borderRadius: 21,
+    backgroundColor: '#1E3A5F', alignItems: 'center', justifyContent: 'center',
     marginRight: 12,
   },
-  profesorAvatarText: { color: '#fff', fontWeight: '800', fontSize: 18 },
+  profesorAvatarText: { color: '#FFFFFF', fontWeight: '700', fontSize: 16 },
   profesorInfo: { flex: 1 },
-  profesorNombre: { fontSize: 15, fontWeight: '700', color: '#1f2937' },
-  profesorEmail: { fontSize: 12, color: '#6b7280', marginTop: 2 },
-  arrow: { fontSize: 24, color: '#1a3a6b', fontWeight: 'bold' },
-headerBar: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', marginBottom: 16,
-  },
-  headerTitulo: { fontSize: 20, fontWeight: '800', color: '#1a3a6b' },
-  botonSalir: {
-    backgroundColor: '#ef4444', paddingHorizontal: 14,
-    paddingVertical: 8, borderRadius: 8,
-  },
-  botonSalirTexto: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  profesorNombre: { fontSize: 14, fontWeight: '700', color: '#0F172A' },
+  profesorEmail: { fontSize: 12, color: '#64748B', marginTop: 2 },
+  arrow: { fontSize: 20, color: '#CBD5E1' },
+
   // Logo
   logoCard: {
-    backgroundColor: '#fff', borderRadius: 12, padding: 16,
-    marginBottom: 18, elevation: 2, alignItems: 'center',
+    backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16,
+    marginBottom: 18, borderWidth: 1, borderColor: '#E2E8F0',
+    elevation: 1, alignItems: 'center',
   },
   logoPreview: { width: 200, height: 120, marginBottom: 12 },
   logoPlaceholder: { alignItems: 'center', marginBottom: 12 },
   logoPlaceholderIcon: { fontSize: 36 },
-  logoPlaceholderText: { fontSize: 12, color: '#9ca3af', marginTop: 4 },
+  logoPlaceholderText: { fontSize: 12, color: '#94A3B8', marginTop: 4 },
   logoBtn: {
-    backgroundColor: '#1a3a6b', paddingHorizontal: 24, paddingVertical: 10,
+    backgroundColor: '#1E3A5F', paddingHorizontal: 24, paddingVertical: 10,
     borderRadius: 8, minWidth: 140, alignItems: 'center',
   },
-  logoBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
-  logoHint: { fontSize: 11, color: '#9ca3af', marginTop: 8, textAlign: 'center' },
+  logoBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
+  logoHint: { fontSize: 11, color: '#94A3B8', marginTop: 8, textAlign: 'center' },
 });
