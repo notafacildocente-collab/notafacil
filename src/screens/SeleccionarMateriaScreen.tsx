@@ -108,7 +108,7 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [1, 1],
+      aspect: [3, 4],
       quality: 0.5,
       base64: true,
     });
@@ -160,7 +160,21 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
 
       {/* HEADER */}
       <View style={styles.header}>
-        <View style={styles.headerTop}>
+        {/* Fila superior: botones Horario / Salir */}
+        <View style={styles.headerTopRow}>
+          <Text style={styles.headerAppName}>NotaFácil</Text>
+          <View style={styles.headerBtns}>
+            <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.navigate('Horario')}>
+              <Text style={styles.headerBtnText}>Horario</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.headerBtn} onPress={cerrarSesion}>
+              <Text style={styles.headerBtnText}>Salir</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Fila inferior: avatar grande + info */}
+        <View style={styles.headerBottom}>
           {/* Avatar — toca para cambiar foto */}
           <TouchableOpacity
             style={styles.avatarWrap}
@@ -173,39 +187,30 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
             ) : fotoUrl ? (
               <Image source={{ uri: fotoUrl }} style={styles.avatarImg} />
             ) : (
-              <Ionicons name="person" size={30} color="#FFFFFF" />
+              <Ionicons name="person" size={48} color="rgba(255,255,255,0.7)" />
             )}
-            {/* Ícono de cámara pequeño */}
             {!subiendoFoto && (
               <View style={styles.camaraIcon}>
-                <Ionicons name="camera" size={10} color="#FFFFFF" />
+                <Ionicons name="camera" size={12} color="#FFFFFF" />
               </View>
             )}
           </TouchableOpacity>
 
-          <View style={styles.headerCenter}>
-            <Text style={styles.headerBienvenida}>Bienvenida, {primerNombre}</Text>
-          </View>
-
-          <View style={styles.headerBtns}>
-            <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.navigate('Horario')}>
-              <Text style={styles.headerBtnText}>Horario</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.headerBtn} onPress={cerrarSesion}>
-              <Text style={styles.headerBtnText}>Salir</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.chipsRow}>
-          <View style={styles.chip}>
-            <Text style={styles.chipText}>{materias.length} materias</Text>
-          </View>
-          {periodoInfo && (
-            <View style={styles.chip}>
-              <Text style={styles.chipText}>P{periodoInfo.numero} período activo</Text>
+          {/* Nombre y chips */}
+          <View style={styles.headerInfo}>
+            <Text style={styles.headerBienvenida}>Bienvenida,</Text>
+            <Text style={styles.headerNombre}>{primerNombre}</Text>
+            <View style={styles.chipsRow}>
+              <View style={styles.chip}>
+                <Text style={styles.chipText}>{materias.length} materias</Text>
+              </View>
+              {periodoInfo && (
+                <View style={styles.chip}>
+                  <Text style={styles.chipText}>P{periodoInfo.numero} activo</Text>
+                </View>
+              )}
             </View>
-          )}
+          </View>
         </View>
       </View>
 
@@ -313,26 +318,11 @@ const styles = StyleSheet.create({
     paddingTop: 52,
     paddingBottom: 20,
   },
-  headerTop: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 12 },
-
-  avatarWrap: {
-    width: 56, height: 56, borderRadius: 28,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    justifyContent: 'center', alignItems: 'center',
-    borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)',
-    overflow: 'hidden',
+  headerTopRow: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between', marginBottom: 20,
   },
-  avatarImg: { width: 56, height: 56, borderRadius: 28 },
-  camaraIcon: {
-    position: 'absolute', bottom: 0, right: 0,
-    backgroundColor: '#2563EB',
-    width: 18, height: 18, borderRadius: 9,
-    justifyContent: 'center', alignItems: 'center',
-    borderWidth: 1.5, borderColor: '#1E3A5F',
-  },
-
-  headerCenter: { flex: 1 },
-  headerBienvenida: { fontSize: 20, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.2 },
+  headerAppName: { fontSize: 15, fontWeight: '700', color: 'rgba(255,255,255,0.6)' },
   headerBtns: { flexDirection: 'row', gap: 8 },
   headerBtn: {
     paddingHorizontal: 14, paddingVertical: 7,
@@ -341,12 +331,35 @@ const styles = StyleSheet.create({
   },
   headerBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '600' },
 
-  chipsRow: { flexDirection: 'row', gap: 8 },
+  headerBottom: { flexDirection: 'row', alignItems: 'flex-end', gap: 16 },
+
+  avatarWrap: {
+    width: 90, height: 112,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center', alignItems: 'center',
+    borderWidth: 2, borderColor: 'rgba(255,255,255,0.25)',
+    overflow: 'hidden',
+  },
+  avatarImg: { width: 90, height: 112, borderRadius: 14 },
+  camaraIcon: {
+    position: 'absolute', bottom: 6, right: 6,
+    backgroundColor: '#2563EB',
+    width: 22, height: 22, borderRadius: 11,
+    justifyContent: 'center', alignItems: 'center',
+    borderWidth: 2, borderColor: '#1E3A5F',
+  },
+
+  headerInfo: { flex: 1, paddingBottom: 2 },
+  headerBienvenida: { fontSize: 13, color: 'rgba(255,255,255,0.6)', fontWeight: '500', marginBottom: 2 },
+  headerNombre: { fontSize: 26, fontWeight: '800', color: '#FFFFFF', marginBottom: 10 },
+
+  chipsRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   chip: {
     backgroundColor: 'rgba(0,0,0,0.25)',
-    borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6,
+    borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5,
   },
-  chipText: { color: '#E2E8F0', fontSize: 13, fontWeight: '600' },
+  chipText: { color: '#E2E8F0', fontSize: 12, fontWeight: '600' },
 
   lista: { padding: 16, paddingBottom: 32 },
 
