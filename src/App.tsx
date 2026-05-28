@@ -93,8 +93,8 @@ function App() {
               <>
                 <Stack.Screen name="SeleccionarMateria" component={SeleccionarMateriaScreen} options={{ title: 'Mis Materias', headerBackVisible: false }} />
                 <Stack.Screen name="SeleccionarPeriodo" component={SeleccionarPeriodoScreen} options={{ title: 'Seleccionar Periodo' }} />
-                <Stack.Screen name="Calificacion" component={CalificacionScreen} options={{ title: 'Calificar por Desempeños', headerBackVisible: true }} />
-                <Stack.Screen name="Asistencia" component={AsistenciaScreen} options={{ title: 'Control de Asistencia', headerBackVisible: true }} />
+                <Stack.Screen name="Calificacion" component={CalificacionScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="Asistencia" component={AsistenciaScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="Planilla" component={PlanillaScreen} options={{ title: 'Malla por Grupos', headerBackVisible: true }} />
                 <Stack.Screen name="Horario" component={HorarioScreen} options={{ title: 'Mi Horario', headerBackVisible: true }} />
                 <Stack.Screen name="AsignacionesProfesor" component={AsignacionesProfesorScreen} options={{ title: 'Asignaciones', headerBackVisible: true }} />

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
   Modal, TextInput, Alert, ActivityIndicator,
-  StyleSheet, Platform, Image, Linking,
+  StyleSheet, Platform, StatusBar, Image, Linking,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -39,6 +39,8 @@ interface SugerenciaIA {
   razonamiento: string;
 }
 
+const HEADER_PT = Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 8 : 52;
+
 export default function CalificacionScreen() {
   const route = useRoute();
   const navigation = useNavigation();
@@ -61,7 +63,6 @@ export default function CalificacionScreen() {
   const [calificandoIA, setCalificandoIA] = useState(false);
   const [sugerenciaIA, setSugerenciaIA] = useState<SugerenciaIA | null>(null);
   const [imagenesIA, setImagenesIA] = useState<Array<{base64: string; mimeType: string}>>([]);
-  // Teléfono acudiente
   const [modalTelefono, setModalTelefono] = useState(false);
   const [telefonoInput, setTelefonoInput] = useState('');
   const [guardandoTelefono, setGuardandoTelefono] = useState(false);
@@ -74,15 +75,12 @@ export default function CalificacionScreen() {
           apiFetch(`/api/notas/estudiantes/${asignacionId}`),
           apiFetch(`/api/notas/desempenos/${periodoId}?materiaId=${materiaId}`),
         ]);
-
         if (!resEst.ok) throw new Error('Error cargando estudiantes');
         if (!resDes.ok) throw new Error('Error cargando desempeños');
-
         const [dataEst, dataDes]: [Estudiante[], any[]] = await Promise.all([
           resEst.json(),
           resDes.json(),
         ]);
-
         setEstudiantes(dataEst);
         setDesempenos(dataDes.map((d: any) => ({ ...d, porcentaje: parseFloat(String(d.porcentaje)) })));
         if (dataEst.length > 0) setEstudianteActivo(dataEst[0]);
@@ -99,6 +97,7 @@ export default function CalificacionScreen() {
 
   const cargarNotas = useCallback(async (estudianteId: string) => {
     try {
+      setLoadingNotas(true);
       const res = await apiFetch(`/api/notas?asignacionId=${asignacionId}&estudianteId=${estudianteId}`);
       if (res.ok) {
         const data: Nota[] = await res.json();
@@ -143,7 +142,6 @@ export default function CalificacionScreen() {
     const valor = parseFloat(valorLimpio);
     if (valor < 1.0) { Alert.alert('Nota muy baja', 'La nota mínima es 1.0'); return; }
     if (valor > 5.0) { Alert.alert('Nota muy alta', 'La nota máxima es 5.0'); return; }
-
     try {
       setSaving(true);
       const res = await apiFetch('/api/notas', {
@@ -159,7 +157,7 @@ export default function CalificacionScreen() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Error al guardar');
+        throw new Error((err as any).message || 'Error al guardar');
       }
       const notaNueva: any = await res.json();
       setNotas((prev) => [{ ...notaNueva, valor: parseFloat(String(notaNueva.valor)) }, ...prev]);
@@ -168,11 +166,10 @@ export default function CalificacionScreen() {
       setSugerenciaIA(null);
       setImagenesIA([]);
       setModalVisible(false);
-      // Notificación WhatsApp si el acudiente tiene teléfono registrado
       if (notaNueva.waLink) {
         Alert.alert(
           '✅ Nota guardada',
-          `¿Enviar notificación a acudiente de ${estudianteActivo?.nombre}?`,
+          `¿Enviar notificación a acudiente de ${estudianteActivo?.apellido} ${estudianteActivo?.nombre}?`,
           [
             { text: 'No', style: 'cancel' },
             {
@@ -221,10 +218,8 @@ export default function CalificacionScreen() {
     setImagenesIA([]);
     setDescripcionSugerida(null);
     setModalVisible(true);
-
     const notasActuales = notas.filter((n) => n.desempenoId === desempeno.id);
     const posicion = notasActuales.length;
-
     try {
       setLoadingDescripcion(true);
       const res = await apiFetch(
@@ -239,7 +234,7 @@ export default function CalificacionScreen() {
           setDescripcionInput('');
         }
       }
-    } catch (_) {
+    } catch {
       setDescripcionInput('');
     } finally {
       setLoadingDescripcion(false);
@@ -271,27 +266,19 @@ export default function CalificacionScreen() {
           Alert.alert('Permiso requerido', 'Necesitamos acceso a la cámara.');
           return;
         }
-        result = await ImagePicker.launchCameraAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          quality: 0.7,
-          base64: true,
-        });
+        result = await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7, base64: true });
       } else {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
           Alert.alert('Permiso requerido', 'Necesitamos acceso a la galería.');
           return;
         }
-        result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          quality: 0.7,
-          base64: true,
-        });
+        result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7, base64: true });
       }
       if (result.canceled || !result.assets?.[0]?.base64) return;
       const asset = result.assets[0];
       setImagenesIA((prev) => [...prev, { base64: asset.base64!, mimeType: asset.mimeType || 'image/jpeg' }]);
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'No se pudo obtener la imagen');
     }
   };
@@ -303,15 +290,11 @@ export default function CalificacionScreen() {
       setSugerenciaIA(null);
       const res = await apiFetch('/api/notas/calificar-ia', {
         method: 'POST',
-        body: JSON.stringify({
-          asignacionId,
-          desempenoId: desempenoSeleccionado.id,
-          imagenes: imagenesIA,
-        }),
+        body: JSON.stringify({ asignacionId, desempenoId: desempenoSeleccionado.id, imagenes: imagenesIA }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Error al calificar con IA');
+        throw new Error((err as any).message || 'Error al calificar con IA');
       }
       const data: SugerenciaIA = await res.json();
       setSugerenciaIA(data);
@@ -336,9 +319,8 @@ export default function CalificacionScreen() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Error al guardar');
+        throw new Error((err as any).message || 'Error al guardar');
       }
-      // Actualizar estado local
       setEstudiantes((prev) =>
         prev.map((e) => e.id === estudianteActivo.id ? { ...e, telefonoAcudiente: tel } : e),
       );
@@ -354,8 +336,9 @@ export default function CalificacionScreen() {
 
   if (loadingInicial) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#1a3a6b" />
+      <View style={styles.loadingWrap}>
+        <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
+        <ActivityIndicator size="large" color="#2563EB" />
         <Text style={styles.loadingText}>Cargando...</Text>
       </View>
     );
@@ -363,10 +346,14 @@ export default function CalificacionScreen() {
 
   if (estudiantes.length === 0) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.emptyText}>No hay estudiantes en este curso</Text>
-        <TouchableOpacity style={styles.retryBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.retryBtnText}>Volver</Text>
+      <View style={styles.loadingWrap}>
+        <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
+        <Text style={{ color: '#94A3B8', fontSize: 15, marginBottom: 20 }}>No hay estudiantes en este curso</Text>
+        <TouchableOpacity
+          style={{ backgroundColor: '#2563EB', paddingHorizontal: 24, paddingVertical: 10, borderRadius: 8 }}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={{ color: '#fff', fontWeight: '600' }}>Volver</Text>
         </TouchableOpacity>
       </View>
     );
@@ -377,123 +364,178 @@ export default function CalificacionScreen() {
 
   return (
     <View style={styles.flex}>
-      <View style={styles.headerBar}>
-        <Text style={styles.headerMateria}>{materiaNombre}</Text>
-        <Text style={styles.headerPeriodo}>Periodo {periodoNumero}</Text>
+      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
+
+      {/* ── Header personalizado ── */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
+        </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerMateria} numberOfLines={1}>{materiaNombre}</Text>
+          <Text style={styles.headerSub}>Calificar por Desempeños</Text>
+        </View>
+        <View style={styles.periodoBadge}>
+          <Text style={styles.periodoText}>P{periodoNumero}</Text>
+        </View>
       </View>
 
+      {/* ── Búsqueda ── */}
       <View style={styles.searchRow}>
+        <Ionicons name="search-outline" size={17} color="#94A3B8" style={{ marginRight: 8 }} />
         <TextInput
           style={styles.searchInput}
           placeholder="Buscar estudiante..."
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor="#94A3B8"
           value={busquedaEst}
           onChangeText={setBusquedaEst}
-          clearButtonMode="while-editing"
         />
         {busquedaEst.length > 0 && (
-          <TouchableOpacity style={styles.searchClear} onPress={() => setBusquedaEst('')}>
-            <Text style={styles.searchClearText}>✕</Text>
+          <TouchableOpacity onPress={() => setBusquedaEst('')} style={{ padding: 4 }}>
+            <Ionicons name="close-circle" size={18} color="#94A3B8" />
           </TouchableOpacity>
         )}
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll} contentContainerStyle={styles.chipContainer}>
+      {/* ── Chips de estudiantes ── */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.chipScroll}
+        contentContainerStyle={styles.chipContainer}
+      >
         {estudiantes
-          .filter((e) => busquedaEst.trim() === '' || `${e.apellido} ${e.nombre}`.toLowerCase().includes(busquedaEst.toLowerCase()))
+          .filter((e) =>
+            busquedaEst.trim() === '' ||
+            `${e.apellido} ${e.nombre}`.toLowerCase().includes(busquedaEst.toLowerCase()),
+          )
           .map((est) => {
-          const activo = est.id === estudianteActivo?.id;
-          return (
-            <TouchableOpacity key={est.id} style={[styles.chip, activo && styles.chipActivo]} onPress={() => setEstudianteActivo(est)}>
-              <Text style={[styles.chipText, activo && styles.chipTextActivo]} numberOfLines={1}>
-                {est.apellido} {est.nombre}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+            const activo = est.id === estudianteActivo?.id;
+            return (
+              <TouchableOpacity
+                key={est.id}
+                style={[styles.chip, activo && styles.chipActivo]}
+                onPress={() => setEstudianteActivo(est)}
+              >
+                <Text style={[styles.chipText, activo && styles.chipTextActivo]} numberOfLines={1}>
+                  {est.apellido} {est.nombre}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
       </ScrollView>
 
-
-      {/* Botón Calificar con IA — acceso rápido */}
+      {/* ── Banner Calificar con IA ── */}
       <TouchableOpacity
         style={styles.bannerIA}
-        onPress={() => (navigation as any).navigate('CalificarIA', { asignacionId, materiaId, materiaNombre, periodoId, periodoNumero })}
+        onPress={() =>
+          (navigation as any).navigate('CalificarIA', {
+            asignacionId, materiaId, materiaNombre, periodoId, periodoNumero,
+          })
+        }
         activeOpacity={0.85}
       >
-        <Text style={styles.bannerIAText}>📷 Calificar con IA</Text>
-        <Ionicons name="chevron-forward" size={16} color="#2563EB" />
+        <View style={styles.bannerIALeft}>
+          <Ionicons name="camera" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+          <Text style={styles.bannerIAText}>Calificar con IA</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.7)" />
       </TouchableOpacity>
 
       <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollPadding}>
+
+        {/* ── Tarjeta del estudiante activo ── */}
         <View style={styles.estudianteCard}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.estudianteNombre}>{estudianteActivo?.nombre} {estudianteActivo?.apellido}</Text>
+            <Text style={styles.estudianteNombre}>
+              {((estudianteActivo?.apellido || '') + ' ' + (estudianteActivo?.nombre || '')).toUpperCase()}
+            </Text>
             <View style={styles.estudianteDocRow}>
               <Text style={styles.estudianteDoc}>{estudianteActivo?.numeroDocumento}</Text>
               <TouchableOpacity
                 style={styles.telefonoBtn}
-                onPress={() => { setTelefonoInput(estudianteActivo?.telefonoAcudiente || ''); setModalTelefono(true); }}
+                onPress={() => {
+                  setTelefonoInput(estudianteActivo?.telefonoAcudiente || '');
+                  setModalTelefono(true);
+                }}
               >
                 <Text style={styles.telefonoBtnText}>
-                  {estudianteActivo?.telefonoAcudiente ? `📱 ${estudianteActivo.telefonoAcudiente}` : '📱 + Teléfono'}
+                  {estudianteActivo?.telefonoAcudiente
+                    ? `📱 ${estudianteActivo.telefonoAcudiente}`
+                    : '📱 + Tel'}
                 </Text>
               </TouchableOpacity>
             </View>
           </View>
-          <View style={[styles.notaFinalBadge, { backgroundColor: aprobado ? '#10b981' : '#ef4444' }]}>
-            <Text style={styles.notaFinalLabel}>Final</Text>
+          <View style={[styles.notaFinalRing, { backgroundColor: aprobado ? '#059669' : '#DC2626' }]}>
+            <Text style={styles.notaFinalLabel}>FINAL</Text>
             <Text style={styles.notaFinalValor}>{notaFinal.toFixed(1)}</Text>
           </View>
         </View>
 
+        {/* ── Loading notas ── */}
         {loadingNotas && (
-          <View style={styles.notasLoading}>
-            <ActivityIndicator size="small" color="#1a3a6b" />
-            <Text style={styles.notasLoadingText}>Cargando notas...</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 20 }}>
+            <ActivityIndicator size="small" color="#0F172A" />
+            <Text style={{ marginLeft: 8, color: '#64748B', fontSize: 14 }}>Cargando notas...</Text>
           </View>
         )}
 
+        {/* ── Tarjetas de desempeños ── */}
         {!loadingNotas && desempenos.map((desempeno, desempenoIdx) => {
           const { promedio, cantidad } = calcularPromedio(desempeno.id);
           const notasDesempeno = notas.filter((n) => n.desempenoId === desempeno.id);
-          const colorPromedio = promedio === 0 ? '#94a3b8' : promedio >= 3.0 ? '#10b981' : '#ef4444';
+          const hdrPromedioColor = promedio === 0
+            ? 'rgba(255,255,255,0.3)'
+            : promedio >= 3.0 ? '#4ADE80' : '#FCA5A5';
 
           return (
             <View key={desempeno.id} style={styles.desempenoCard}>
-              <View style={styles.desempenoHeader}>
-                <View style={styles.desempenoInfo}>
-                  <Text style={styles.desempenoNumero}>Desempeño {desempenoIdx + 1}</Text>
-                </View>
-                <View style={styles.promedioBox}>
-                  <Text style={styles.promedioLabel}>{cantidad} nota{cantidad !== 1 ? 's' : ''}</Text>
-                  <Text style={[styles.promedioValor, { color: colorPromedio }]}>{promedio.toFixed(1)}</Text>
+              {/* Header oscuro */}
+              <View style={styles.desempenoHeaderRow}>
+                <Text style={styles.desempenoNumeroTxt}>Desempeño {desempenoIdx + 1}</Text>
+                <View style={styles.promedioInfoHdr}>
+                  <Text style={styles.promedioLabelHdr}>{cantidad} nota{cantidad !== 1 ? 's' : ''}</Text>
+                  <Text style={[styles.promedioValorHdr, { color: hdrPromedioColor }]}>
+                    {promedio.toFixed(1)}
+                  </Text>
                 </View>
               </View>
 
-              {notasDesempeno.length === 0 ? (
-                <Text style={styles.sinNotas}>Sin notas ingresadas</Text>
-              ) : (
-                notasDesempeno.map((nota) => (
-                  <View key={nota.id} style={styles.notaFila}>
-                    <View style={styles.notaValorBox}>
-                      <Text style={[styles.notaValor, { color: nota.valor >= 3.0 ? '#10b981' : '#ef4444' }]}>
-                        {nota.valor.toFixed(1)}
-                      </Text>
+              {/* Body */}
+              <View style={styles.desempenoBody}>
+                {notasDesempeno.length === 0 ? (
+                  <Text style={styles.sinNotas}>Sin notas ingresadas</Text>
+                ) : (
+                  notasDesempeno.map((nota) => (
+                    <View key={nota.id} style={styles.notaFila}>
+                      <View style={styles.notaValorBox}>
+                        <Text style={[styles.notaValor, { color: nota.valor >= 3.0 ? '#059669' : '#DC2626' }]}>
+                          {nota.valor.toFixed(1)}
+                        </Text>
+                      </View>
+                      <View style={styles.notaDetalle}>
+                        <Text style={styles.notaDescripcion} numberOfLines={1}>
+                          {nota.descripcion || '—'}
+                        </Text>
+                        <Text style={styles.notaFecha}>
+                          {new Date(nota.createdAt).toLocaleDateString('es-CO')}
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.eliminarBtn}
+                        onPress={() => handleEliminarNota(nota)}
+                      >
+                        <Ionicons name="trash-outline" size={16} color="#DC2626" />
+                      </TouchableOpacity>
                     </View>
-                    <View style={styles.notaDetalle}>
-                      <Text style={styles.notaDescripcion} numberOfLines={1}>{nota.descripcion || '—'}</Text>
-                      <Text style={styles.notaFecha}>{new Date(nota.createdAt).toLocaleDateString('es-CO')}</Text>
-                    </View>
-                    <TouchableOpacity style={styles.eliminarBtn} onPress={() => handleEliminarNota(nota)}>
-                      <Text style={styles.eliminarIcon}>✕</Text>
-                    </TouchableOpacity>
-                  </View>
-                ))
-              )}
+                  ))
+                )}
 
-              <TouchableOpacity style={styles.agregarBtn} onPress={() => abrirModal(desempeno)}>
-                <Text style={styles.agregarBtnText}>+ Agregar nota</Text>
-              </TouchableOpacity>
+                <TouchableOpacity style={styles.agregarBtn} onPress={() => abrirModal(desempeno)}>
+                  <Text style={styles.agregarBtnText}>+ Agregar nota</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           );
         })}
@@ -501,30 +543,34 @@ export default function CalificacionScreen() {
         <View style={{ height: 32 }} />
       </ScrollView>
 
+      {/* ── Modal agregar nota ── */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <Text style={styles.modalTitulo}>
-              Desempeño {desempenos.indexOf(desempenoSeleccionado!) + 1} — {desempenoSeleccionado?.nombre}
+              Desempeño {desempenos.indexOf(desempenoSeleccionado!) + 1}
+              {desempenoSeleccionado?.nombre ? ` — ${desempenoSeleccionado.nombre}` : ''}
             </Text>
-            <Text style={styles.modalSubtitulo}>{estudianteActivo?.nombre} {estudianteActivo?.apellido}</Text>
+            <Text style={styles.modalSubtitulo}>
+              {estudianteActivo?.apellido} {estudianteActivo?.nombre}
+            </Text>
 
-            {/* Botón agregar imagen para IA */}
+            {/* Botón IA */}
             <TouchableOpacity
               style={[styles.botonIA, (imagenesIA.length >= 2 || calificandoIA || saving) && styles.botonDisabled]}
               onPress={agregarImagenIA}
               disabled={imagenesIA.length >= 2 || calificandoIA || saving}
             >
+              <Ionicons name="camera-outline" size={18} color="#fff" style={{ marginRight: 6 }} />
               <Text style={styles.botonIAText}>
                 {imagenesIA.length === 0
-                  ? '📷 Calificar con IA'
+                  ? 'Calificar con IA'
                   : imagenesIA.length === 1
-                  ? '📷 Agregar reverso (opcional)'
+                  ? 'Agregar reverso (opcional)'
                   : '✓ 2 imágenes listas'}
               </Text>
             </TouchableOpacity>
 
-            {/* Miniaturas + botón analizar */}
             {imagenesIA.length > 0 && (
               <View style={styles.thumbnailsRow}>
                 {imagenesIA.map((img, idx) => (
@@ -557,12 +603,11 @@ export default function CalificacionScreen() {
               </View>
             )}
 
-            {/* Sugerencia de la IA */}
             {sugerenciaIA && (
               <View style={styles.sugerenciaCard}>
                 <View style={styles.sugerenciaHeader}>
-                  <Text style={styles.sugerenciaLabel}>Nota sugerida por IA</Text>
-                  <Text style={[styles.sugerenciaNota, { color: sugerenciaIA.notaSugerida >= 3.0 ? '#10b981' : '#ef4444' }]}>
+                  <Text style={styles.sugerenciaLabel}>NOTA SUGERIDA POR IA</Text>
+                  <Text style={[styles.sugerenciaNota, { color: sugerenciaIA.notaSugerida >= 3.0 ? '#059669' : '#DC2626' }]}>
                     {sugerenciaIA.notaSugerida.toFixed(1)}
                   </Text>
                 </View>
@@ -586,10 +631,10 @@ export default function CalificacionScreen() {
             />
 
             <Text style={styles.inputLabel}>
-              Descripción{descripcionSugerida ? ' (compartida con el grupo)' : ' (opcional)'}
+              {descripcionSugerida ? 'Descripción (compartida con el grupo)' : 'Descripción (opcional)'}
             </Text>
             {loadingDescripcion ? (
-              <ActivityIndicator size="small" color="#1a3a6b" style={{ marginVertical: 8 }} />
+              <ActivityIndicator size="small" color="#0F172A" style={{ marginVertical: 8 }} />
             ) : (
               <TextInput
                 style={[styles.input, styles.inputMultiline, descripcionSugerida && styles.inputSugerida]}
@@ -614,7 +659,10 @@ export default function CalificacionScreen() {
                 onPress={handleAgregarNota}
                 disabled={saving}
               >
-                {saving ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.botonGuardarText}>Guardar</Text>}
+                {saving
+                  ? <ActivityIndicator size="small" color="#fff" />
+                  : <Text style={styles.botonGuardarText}>Guardar</Text>
+                }
               </TouchableOpacity>
             </View>
           </View>
@@ -626,7 +674,9 @@ export default function CalificacionScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalSheet, { paddingBottom: Platform.OS === 'ios' ? 40 : 24 }]}>
             <Text style={styles.modalTitulo}>📱 Teléfono del Acudiente</Text>
-            <Text style={styles.modalSubtitulo}>{estudianteActivo?.nombre} {estudianteActivo?.apellido}</Text>
+            <Text style={styles.modalSubtitulo}>
+              {estudianteActivo?.apellido} {estudianteActivo?.nombre}
+            </Text>
             <Text style={styles.inputLabel}>Número de WhatsApp (ej: 3001234567)</Text>
             <TextInput
               style={styles.input}
@@ -650,7 +700,7 @@ export default function CalificacionScreen() {
               {telefonoInput.trim() !== '' && estudianteActivo?.telefonoAcudiente && (
                 <TouchableOpacity
                   style={[styles.botonModal, { backgroundColor: '#fee2e2' }]}
-                  onPress={() => { setTelefonoInput(''); }}
+                  onPress={() => setTelefonoInput('')}
                   disabled={guardandoTelefono}
                 >
                   <Text style={{ color: '#dc2626', fontWeight: '600' }}>Quitar</Text>
@@ -676,87 +726,112 @@ export default function CalificacionScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: '#F1F5F9' },
-  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F1F5F9', padding: 24 },
-  loadingText: { marginTop: 12, fontSize: 15, color: '#64748B' },
-  emptyText: { fontSize: 15, color: '#64748B', textAlign: 'center', marginBottom: 20 },
-  retryBtn: { backgroundColor: '#1E3A5F', paddingHorizontal: 24, paddingVertical: 10, borderRadius: 8 },
-  retryBtnText: { color: '#FFFFFF', fontWeight: '600' },
+  loadingWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0F172A' },
+  loadingText: { marginTop: 12, color: '#94A3B8', fontSize: 15 },
 
-  headerBar: {
-    backgroundColor: '#1E3A5F',
-    paddingHorizontal: 16, paddingVertical: 12,
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+  // ── Header ──
+  header: {
+    backgroundColor: '#0F172A',
+    paddingTop: HEADER_PT,
+    paddingBottom: 14,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  headerMateria: { color: '#FFFFFF', fontWeight: '700', fontSize: 16, flex: 1 },
-  headerPeriodo: { color: '#93C5FD', fontSize: 13 },
+  backBtn: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  headerContent: { flex: 1 },
+  headerMateria: { color: '#FFFFFF', fontWeight: '800', fontSize: 17, letterSpacing: -0.3 },
+  headerSub: { color: 'rgba(255,255,255,0.45)', fontSize: 12, marginTop: 1, fontWeight: '500' },
+  periodoBadge: {
+    backgroundColor: '#2563EB', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6,
+  },
+  periodoText: { color: '#fff', fontWeight: '700', fontSize: 12 },
 
+  // ── Búsqueda ──
   searchRow: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#FFFFFF', paddingHorizontal: 12, paddingVertical: 8,
+    backgroundColor: '#FFFFFF', paddingHorizontal: 14, paddingVertical: 10,
     borderBottomWidth: 1, borderBottomColor: '#E2E8F0',
   },
   searchInput: {
-    flex: 1, backgroundColor: '#F1F5F9', borderRadius: 20,
-    paddingHorizontal: 14, paddingVertical: 7, fontSize: 14, color: '#0F172A',
+    flex: 1, fontSize: 14, color: '#0F172A',
   },
-  searchClear: { marginLeft: 8, padding: 4 },
-  searchClearText: { color: '#94A3B8', fontSize: 16, fontWeight: '700' },
 
-  chipScroll: { maxHeight: 52, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
-  chipContainer: { paddingHorizontal: 12, paddingVertical: 8, gap: 8, flexDirection: 'row', alignItems: 'center' },
-  chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0' },
-  chipActivo: { backgroundColor: '#1E3A5F', borderColor: '#1E3A5F' },
-  chipText: { fontSize: 13, color: '#475569' },
-  chipTextActivo: { color: '#FFFFFF', fontWeight: '600' },
+  // ── Chips ──
+  chipScroll: {
+    maxHeight: 52, backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1, borderBottomColor: '#E2E8F0',
+  },
+  chipContainer: { paddingHorizontal: 12, paddingVertical: 9, gap: 8, flexDirection: 'row', alignItems: 'center' },
+  chip: {
+    paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20,
+    backgroundColor: '#F1F5F9', borderWidth: 1.5, borderColor: '#CBD5E1',
+  },
+  chipActivo: { backgroundColor: '#0F172A', borderColor: '#0F172A' },
+  chipText: { fontSize: 13, color: '#475569', fontWeight: '600' },
+  chipTextActivo: { color: '#FFFFFF', fontWeight: '700' },
 
+  // ── Banner IA ──
   bannerIA: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#EFF6FF', paddingHorizontal: 16, paddingVertical: 11,
-    borderBottomWidth: 1, borderBottomColor: '#BFDBFE',
+    backgroundColor: '#1D4ED8', paddingHorizontal: 16, paddingVertical: 13,
+    borderBottomWidth: 1, borderBottomColor: '#1E40AF',
   },
-  bannerIAText: { color: '#1E3A5F', fontWeight: '700', fontSize: 14 },
+  bannerIALeft: { flexDirection: 'row', alignItems: 'center' },
+  bannerIAText: { color: '#FFFFFF', fontWeight: '800', fontSize: 14, letterSpacing: 0.2 },
 
+  // ── Scroll ──
   scrollContent: { flex: 1 },
-  scrollPadding: { padding: 16 },
+  scrollPadding: { padding: 14 },
 
+  // ── Tarjeta estudiante ──
   estudianteCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, marginBottom: 16,
+    backgroundColor: '#FFFFFF', borderRadius: 14, padding: 16, marginBottom: 14,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    borderWidth: 1, borderColor: '#E2E8F0', elevation: 1,
+    borderWidth: 1, borderColor: '#E2E8F0', elevation: 3,
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1, shadowRadius: 6,
   },
-  estudianteNombre: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
-  estudianteDocRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginTop: 3 },
+  estudianteNombre: { fontSize: 15, fontWeight: '800', color: '#0F172A', letterSpacing: 0.3, marginBottom: 4 },
+  estudianteDocRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
   estudianteDoc: { fontSize: 12, color: '#94A3B8' },
   telefonoBtn: {
     backgroundColor: '#EFF6FF', paddingHorizontal: 8, paddingVertical: 3,
     borderRadius: 8, borderWidth: 1, borderColor: '#BFDBFE',
   },
   telefonoBtnText: { fontSize: 11, color: '#2563EB', fontWeight: '600' },
-  notaFinalBadge: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, alignItems: 'center' },
-  notaFinalLabel: { color: '#FFFFFF', fontSize: 10, fontWeight: '600' },
-  notaFinalValor: { color: '#FFFFFF', fontSize: 28, fontWeight: '800', lineHeight: 32 },
+  notaFinalRing: {
+    width: 64, height: 64, borderRadius: 32,
+    justifyContent: 'center', alignItems: 'center',
+    marginLeft: 12,
+  },
+  notaFinalLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 9, fontWeight: '700', letterSpacing: 0.5 },
+  notaFinalValor: { color: '#FFFFFF', fontSize: 24, fontWeight: '900', lineHeight: 28 },
 
-  notasLoading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 20 },
-  notasLoadingText: { marginLeft: 8, color: '#64748B', fontSize: 14 },
-
+  // ── Tarjeta desempeño ──
   desempenoCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, marginBottom: 12,
-    borderLeftWidth: 4, borderLeftColor: '#1E3A5F',
-    borderWidth: 1, borderColor: '#E2E8F0', elevation: 1,
+    backgroundColor: '#FFFFFF', borderRadius: 12, marginBottom: 12,
+    borderWidth: 1, borderColor: '#E2E8F0', elevation: 2, overflow: 'hidden',
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06, shadowRadius: 4,
   },
-  desempenoHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  desempenoInfo: { flex: 1 },
-  desempenoNumero: { fontSize: 16, fontWeight: '800', color: '#1E3A5F', marginBottom: 2 },
-  desempenoNombre: { fontSize: 14, fontWeight: '700', color: '#0F172A' },
-  desempenoPorcentaje: { fontSize: 12, color: '#64748B', marginTop: 2 },
-  promedioBox: {
-    alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6,
-    backgroundColor: '#F8FAFC', borderRadius: 8, minWidth: 70,
-    borderWidth: 1, borderColor: '#E2E8F0',
+  desempenoHeaderRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    backgroundColor: '#1E3A5F', paddingHorizontal: 14, paddingVertical: 10,
   },
-  promedioLabel: { fontSize: 10, color: '#94A3B8', fontWeight: '600' },
-  promedioValor: { fontSize: 26, fontWeight: '800', marginTop: 2 },
-  sinNotas: { fontSize: 13, color: '#94A3B8', paddingVertical: 8 },
+  desempenoNumeroTxt: { fontSize: 14, fontWeight: '800', color: '#FFFFFF' },
+  promedioInfoHdr: { alignItems: 'flex-end' },
+  promedioLabelHdr: { fontSize: 10, color: 'rgba(255,255,255,0.55)', fontWeight: '600' },
+  promedioValorHdr: { fontSize: 22, fontWeight: '900', lineHeight: 26 },
+  desempenoBody: { paddingHorizontal: 14, paddingTop: 10, paddingBottom: 10 },
+
+  sinNotas: { fontSize: 13, color: '#94A3B8', paddingVertical: 10, fontStyle: 'italic', textAlign: 'center' },
+
   notaFila: {
     flexDirection: 'row', alignItems: 'center',
     paddingVertical: 8, paddingHorizontal: 10, marginBottom: 6,
@@ -766,69 +841,73 @@ const styles = StyleSheet.create({
   notaValorBox: { marginRight: 12 },
   notaValor: { fontSize: 20, fontWeight: '800' },
   notaDetalle: { flex: 1 },
-  notaDescripcion: { fontSize: 13, color: '#374151', fontWeight: '500' },
-  notaFecha: { fontSize: 11, color: '#94A3B8', marginTop: 2 },
+  notaDescripcion: { fontSize: 13, color: '#374151', fontWeight: '600' },
+  notaFecha: { fontSize: 11, color: '#94A3B8', marginTop: 1 },
   eliminarBtn: { padding: 6 },
-  eliminarIcon: { fontSize: 15, color: '#DC2626', fontWeight: '700' },
-  agregarBtn: { backgroundColor: '#1E3A5F', borderRadius: 8, paddingVertical: 10, alignItems: 'center', marginTop: 6 },
-  agregarBtnText: { color: '#FFFFFF', fontWeight: '600', fontSize: 14 },
 
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  agregarBtn: {
+    backgroundColor: '#1E3A5F', borderRadius: 8, paddingVertical: 11,
+    alignItems: 'center', marginTop: 8,
+  },
+  agregarBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
+
+  // ── Modal ──
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
   modalSheet: {
     backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20,
     padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24,
   },
-  modalTitulo: { fontSize: 17, fontWeight: '700', color: '#0F172A', marginBottom: 4 },
-  modalSubtitulo: { fontSize: 13, color: '#64748B', marginBottom: 16 },
+  modalTitulo: { fontSize: 16, fontWeight: '800', color: '#0F172A', marginBottom: 4 },
+  modalSubtitulo: { fontSize: 13, color: '#64748B', marginBottom: 16, fontWeight: '600' },
+
   botonIA: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: '#2563EB',
-    borderRadius: 10, paddingVertical: 11, marginBottom: 8, gap: 8,
+    backgroundColor: '#1D4ED8', borderRadius: 10,
+    paddingVertical: 11, marginBottom: 8,
   },
-  botonIAText: { color: '#1E3A5F', fontWeight: '700', fontSize: 14 },
+  botonIAText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
+
   thumbnailsRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12, paddingHorizontal: 4 },
   thumbnailContainer: { alignItems: 'center', position: 'relative' },
-  thumbnail: { width: 68, height: 68, borderRadius: 8, borderWidth: 1.5, borderColor: '#2563EB' },
+  thumbnail: { width: 68, height: 68, borderRadius: 8, borderWidth: 1.5, borderColor: '#1D4ED8' },
   thumbnailRemove: {
     position: 'absolute', top: -7, right: -7,
     backgroundColor: '#DC2626', borderRadius: 10,
     width: 20, height: 20, justifyContent: 'center', alignItems: 'center',
   },
   thumbnailRemoveText: { color: '#FFFFFF', fontSize: 10, fontWeight: '700' },
-  thumbnailLabel: { fontSize: 10, color: '#2563EB', fontWeight: '600', marginTop: 4 },
+  thumbnailLabel: { fontSize: 10, color: '#1D4ED8', fontWeight: '600', marginTop: 4 },
   botonAnalizar: {
-    flex: 1, backgroundColor: '#1E3A5F', borderRadius: 10,
+    flex: 1, backgroundColor: '#0F172A', borderRadius: 10,
     paddingVertical: 12, alignItems: 'center', justifyContent: 'center', minHeight: 68,
   },
   botonAnalizarText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13, textAlign: 'center', lineHeight: 18 },
+
   sugerenciaCard: {
     backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: '#BFDBFE',
     borderRadius: 10, padding: 12, marginBottom: 12,
   },
   sugerenciaHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-  sugerenciaLabel: { fontSize: 11, fontWeight: '700', color: '#1E3A5F', textTransform: 'uppercase', letterSpacing: 0.5 },
-  sugerenciaNota: { fontSize: 28, fontWeight: '800' },
+  sugerenciaLabel: { fontSize: 10, fontWeight: '800', color: '#1E3A5F', letterSpacing: 0.6 },
+  sugerenciaNota: { fontSize: 28, fontWeight: '900' },
   sugerenciaRazonamiento: { fontSize: 13, color: '#475569', lineHeight: 18, marginBottom: 10 },
-  botonAceptarIA: { backgroundColor: '#1E3A5F', borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
+  botonAceptarIA: { backgroundColor: '#0F172A', borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
   botonAceptarIAText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
-  inputLabel: { fontSize: 12, fontWeight: '600', color: '#374151', marginBottom: 6, marginTop: 12 },
+
+  inputLabel: { fontSize: 12, fontWeight: '700', color: '#374151', marginBottom: 6, marginTop: 12 },
   input: {
-    borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8,
+    borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 8,
     paddingHorizontal: 12, paddingVertical: 10,
     fontSize: 15, color: '#0F172A', backgroundColor: '#F8FAFC',
   },
   inputMultiline: { minHeight: 72, textAlignVertical: 'top' },
   inputSugerida: { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
-  actitudinalSeccion: { margin: 12, marginTop: 4, backgroundColor: '#F0FDF4', borderRadius: 12, borderWidth: 1, borderColor: '#BBF7D0', overflow: 'hidden' },
-  actitudinalProm: { color: '#BBF7D0', fontWeight: '700', fontSize: 16 },
-  notasLista: { paddingHorizontal: 12, paddingTop: 8 },
-  notaItem: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#DCFCE7' },
-  notaDesc: { color: '#166534', fontSize: 13, flex: 1 },
+
   modalBotones: { flexDirection: 'row', gap: 12, marginTop: 24 },
   botonModal: { flex: 1, paddingVertical: 13, borderRadius: 10, alignItems: 'center' },
   botonCancelar: { backgroundColor: '#F1F5F9' },
   botonCancelarText: { color: '#475569', fontWeight: '600', fontSize: 15 },
-  botonGuardar: { backgroundColor: '#1E3A5F' },
+  botonGuardar: { backgroundColor: '#0F172A' },
   botonGuardarText: { color: '#FFFFFF', fontWeight: '700', fontSize: 15 },
-  botonDisabled: { opacity: 0.6 },
+  botonDisabled: { opacity: 0.55 },
 });
