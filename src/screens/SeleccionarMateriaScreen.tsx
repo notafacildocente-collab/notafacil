@@ -281,10 +281,13 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
                   <Ionicons name="chevron-forward" size={18} color="#0891B2" />
                 </TouchableOpacity>
               )}
-              {cursoId && (
+              {cursoId && materias.length > 0 && (
                 <TouchableOpacity
                   style={styles.botonRetiros}
-                  onPress={() => navigation.navigate('Retiros', { cursoId })}
+                  onPress={() => navigation.navigate('Retiros', {
+                    cursoId,
+                    asignacionId: materias[0].asignacionId,
+                  })}
                 >
                   <Ionicons name="exit-outline" size={20} color="#DC2626" />
                   <Text style={styles.botonRetirosTexto}>Retiros de Estudiantes</Text>
