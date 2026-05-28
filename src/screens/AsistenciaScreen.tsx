@@ -4,6 +4,7 @@ import {
   StyleSheet, ActivityIndicator, Alert, Platform,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -214,6 +215,9 @@ export default function AsistenciaScreen() {
 
       {/* ── Barra de contexto (materia + periodo) ── */}
       <View style={styles.headerBar}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={20} color="#ffffff" />
+        </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>{materiaNombre}</Text>
         <View style={styles.periodoPill}>
           <Text style={styles.periodoText}>Periodo {periodoNumero}</Text>
@@ -318,121 +322,45 @@ export default function AsistenciaScreen() {
 
 // ─── Estilos ──────────────────────────────────────────────────────────────────
 
+
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#f3f4f6' },
-  loadingWrap: {
-    flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6',
-  },
-  loadingText: { marginTop: 12, color: '#6b7280', fontSize: 15 },
+  flex:        { flex: 1, backgroundColor: '#0D0A1A' },
+  loadingWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0D0A1A' },
+  loadingText: { marginTop: 12, color: '#A89FC0', fontSize: 15 },
 
-  // ── Barra de contexto ──
-  headerBar: {
-    backgroundColor: '#1a3a6b',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerTitle: {
-    color: '#ffffff', fontSize: 15, fontWeight: '700', flex: 1, marginRight: 10,
-  },
-  periodoPill: {
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    paddingHorizontal: 10, paddingVertical: 3,
-    borderRadius: 10,
-  },
-  periodoText: { color: '#ffffff', fontSize: 12, fontWeight: '600' },
+  headerBar:   { backgroundColor: '#150F2A', paddingVertical: 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 2, borderBottomColor: '#7C3AED', gap: 10 },
+  backBtn:     { width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { color: '#F5F0FF', fontSize: 15, fontWeight: '700', flex: 1 },
+  periodoPill: { backgroundColor: 'rgba(124,58,237,0.25)', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10, borderWidth: 0.5, borderColor: 'rgba(124,58,237,0.4)' },
+  periodoText: { color: '#9F67F5', fontSize: 12, fontWeight: '600' },
 
-  // ── Selector de fecha ──
-  fechaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  fechaNavBtn: { paddingHorizontal: 16, paddingVertical: 10 },
-  fechaNavChar: { fontSize: 28, color: '#374151', lineHeight: 32 },
-  fechaCentro: { flex: 1, alignItems: 'center', paddingVertical: 8 },
-  fechaTexto: {
-    fontSize: 14, fontWeight: '600', color: '#111827',
-    textTransform: 'capitalize', textAlign: 'center',
-  },
-  guardadoTexto: {
-    fontSize: 11, color: '#10b981', fontWeight: '600', marginTop: 2, textAlign: 'center',
-  },
+  fechaRow:     { flexDirection: 'row', alignItems: 'center', backgroundColor: '#150F2A', borderBottomWidth: 0.5, borderBottomColor: 'rgba(255,255,255,0.07)' },
+  fechaNavBtn:  { paddingHorizontal: 16, paddingVertical: 10 },
+  fechaNavChar: { fontSize: 28, color: '#A89FC0', lineHeight: 32 },
+  fechaCentro:  { flex: 1, alignItems: 'center', paddingVertical: 8 },
+  fechaTexto:   { fontSize: 14, fontWeight: '600', color: '#F5F0FF', textTransform: 'capitalize', textAlign: 'center' },
+  guardadoTexto:{ fontSize: 11, color: '#10B981', fontWeight: '600', marginTop: 2, textAlign: 'center' },
 
-  // ── Resumen ──
-  resumenRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 10, paddingVertical: 8,
-    gap: 8,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1, borderBottomColor: '#e5e7eb',
-  },
-  resumenItem: {
-    flex: 1, borderRadius: 8, paddingVertical: 6, alignItems: 'center',
-  },
-  resumenNum: { fontSize: 20, fontWeight: '700' },
+  resumenRow:   { flexDirection: 'row', paddingHorizontal: 10, paddingVertical: 8, gap: 8, backgroundColor: '#150F2A', borderBottomWidth: 0.5, borderBottomColor: 'rgba(255,255,255,0.07)' },
+  resumenItem:  { flex: 1, borderRadius: 8, paddingVertical: 6, alignItems: 'center' },
+  resumenNum:   { fontSize: 20, fontWeight: '700' },
   resumenLabel: { fontSize: 11, fontWeight: '700', marginTop: 1 },
 
-  // ── Marcar todos ──
-  marcarTodosRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12, paddingVertical: 8,
-    backgroundColor: '#f9fafb',
-    borderBottomWidth: 1, borderBottomColor: '#e5e7eb',
-    gap: 8,
-  },
-  marcarTodosLabel: { fontSize: 12, color: '#6b7280', fontWeight: '600' },
-  marcarBtn: {
-    paddingHorizontal: 14, paddingVertical: 6, borderRadius: 6,
-  },
-  marcarBtnText: { color: '#ffffff', fontWeight: '700', fontSize: 12 },
+  marcarTodosRow:   { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#1C1435', borderBottomWidth: 0.5, borderBottomColor: 'rgba(255,255,255,0.07)', gap: 8 },
+  marcarTodosLabel: { fontSize: 12, color: '#A89FC0', fontWeight: '600' },
+  marcarBtn:        { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 6 },
+  marcarBtnText:    { color: '#F5F0FF', fontWeight: '700', fontSize: 12 },
 
-  // ── Lista ──
-  listaContenido: { paddingHorizontal: 10, paddingTop: 8 },
-  estudianteRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 10,
-    paddingHorizontal: 12, paddingVertical: 10,
-    marginBottom: 6,
-    elevation: 1,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-  },
-  numTexto: {
-    width: 26, fontSize: 13, color: '#9ca3af', fontWeight: '500', marginRight: 6,
-  },
-  nombreTexto: { fontSize: 13, fontWeight: '600', color: '#111827' },
-  docTexto: { fontSize: 11, color: '#9ca3af', marginTop: 1 },
+  listaContenido:{ paddingHorizontal: 10, paddingTop: 8, paddingBottom: 100 },
+  estudianteRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1C1435', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 6, borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.07)' },
+  numTexto:      { width: 26, fontSize: 13, color: '#5A5070', fontWeight: '500', marginRight: 6 },
+  nombreTexto:   { fontSize: 13, fontWeight: '600', color: '#F5F0FF' },
+  docTexto:      { fontSize: 11, color: '#A89FC0', marginTop: 1 },
 
-  // ── Botón de estado ──
-  estadoBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  estadoBtnText: { color: '#ffffff', fontWeight: '700', fontSize: 16 },
+  estadoBtn:    { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  estadoBtnText:{ color: '#F5F0FF', fontWeight: '700', fontSize: 16 },
 
-  // ── Footer ──
-  footerWrap: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: '#ffffff',
-    padding: 12,
-    paddingBottom: Platform.OS === 'ios' ? 30 : 12,
-    borderTopWidth: 1, borderTopColor: '#e5e7eb',
-  },
-  guardarBtn: {
-    backgroundColor: '#1a3a6b',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  guardarBtnText: { color: '#ffffff', fontWeight: '700', fontSize: 16 },
+  footerWrap:    { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#150F2A', padding: 12, paddingBottom: Platform.OS === 'ios' ? 30 : 12, borderTopWidth: 0.5, borderTopColor: 'rgba(255,255,255,0.07)' },
+  guardarBtn:    { backgroundColor: '#7C3AED', borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  guardarBtnText:{ color: '#F5F0FF', fontWeight: '700', fontSize: 16 },
 });

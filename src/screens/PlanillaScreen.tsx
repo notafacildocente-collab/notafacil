@@ -3,7 +3,8 @@ import {
   View, Text, ScrollView, StyleSheet,
   ActivityIndicator, Alert, TouchableOpacity,
 } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { exportarPlanillaPDF } from '../services/exportarPDF';
 import { apiFetch } from '../services/api';
 
@@ -15,6 +16,7 @@ const CELDA_PROM = 58;
 
 export default function PlanillaScreen() {
   const route = useRoute();
+  const navigation = useNavigation();
   const { asignacionId, periodoId, materiaNombre, periodoNumero } = (route.params || {}) as any;
   const [planilla, setPlanilla] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +40,7 @@ export default function PlanillaScreen() {
     </View>
   );
 
-  if (planilla.length === 0) return <View style={styles.center}><Text style={{color:'#6b7280'}}>Sin datos</Text></View>;
+  if (planilla.length === 0) return <View style={styles.center}><Text style={{color:'#5A5070'}}>Sin datos</Text></View>;
 
   const desempenos = planilla[0].desempenos;
   const maxNotas = desempenos.map((_:any, di:number) =>
@@ -57,7 +59,13 @@ export default function PlanillaScreen() {
   return (
     <View style={styles.flex}>
       <View style={styles.headerBar}>
-        <Text style={styles.headerMateria} numberOfLines={1}>{materiaNombre}</Text>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={20} color="#ffffff" />
+        </TouchableOpacity>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.headerSubtitle}>Malla por Grupos</Text>
+          <Text style={styles.headerMateria} numberOfLines={1}>{materiaNombre}</Text>
+        </View>
         <Text style={styles.headerPeriodo}>P{periodoNumero}</Text>
       </View>
 
@@ -147,34 +155,36 @@ export default function PlanillaScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: {flex:1, backgroundColor:'#f3f4f6'},
+  flex: {flex:1, backgroundColor:'#0D0A1A'},
   center: {flex:1, justifyContent:'center', alignItems:'center'},
-  loadingText: {marginTop:12, color:'#6b7280'},
-  headerBar: {backgroundColor:'#1a3a6b', paddingHorizontal:16, paddingVertical:12, flexDirection:'row', justifyContent:'space-between', alignItems:'center'},
-  headerMateria: {color:'#fff', fontWeight:'700', fontSize:16, flex:1},
-  headerPeriodo: {color:'#93c5fd', fontSize:14},
-  fila: {flexDirection:'row', alignItems:'stretch', borderBottomWidth:1, borderBottomColor:'#e5e7eb', backgroundColor:'#fff'},
+  loadingText: {marginTop:12, color:'#5A5070'},
+  headerBar: {backgroundColor:'#7C3AED', paddingHorizontal:16, paddingVertical:12, flexDirection:'row', justifyContent:'space-between', alignItems:'center', gap:10},
+  backBtn: {width:34, height:34, borderRadius:17, backgroundColor:'rgba(255,255,255,0.2)', alignItems:'center', justifyContent:'center'},
+  headerSubtitle: {color:'rgba(255,255,255,0.7)', fontSize:11, fontWeight:'600', letterSpacing:0.5, textTransform:'uppercase', marginBottom:2},
+  headerMateria: {color:'#fff', fontWeight:'700', fontSize:16},
+  headerPeriodo: {color:'rgba(255,255,255,0.75)', fontSize:14, fontWeight:'600'},
+  fila: {flexDirection:'row', alignItems:'stretch', borderBottomWidth:1, borderBottomColor:'rgba(255,255,255,0.07)', backgroundColor:'#fff'},
   filaPar: {backgroundColor:'#f9fafb'},
   encCell: {paddingVertical:8, paddingHorizontal:4, alignItems:'center', justifyContent:'center', backgroundColor:'#eff6ff', borderRightWidth:1, borderRightColor:'#bfdbfe'},
-  encTxt: {fontSize:12, fontWeight:'700', color:'#1a3a6b', textAlign:'center'},
+  encTxt: {fontSize:12, fontWeight:'700', color:'#7C3AED', textAlign:'center'},
   encD: {backgroundColor:'#dbeafe'},
   encDTxt: {fontSize:13, fontWeight:'800', color:'#1e40af'},
   encDSub: {fontSize:9, color:'#3b82f6', marginTop:1},
   subEncCell: {paddingVertical:5, paddingHorizontal:3, alignItems:'center', justifyContent:'center', borderRightWidth:1, borderRightColor:'#e2e8f0'},
-  subEncTxt: {fontSize:9, color:'#475569', textAlign:'center', fontWeight:'600'},
-  celdaNombre: {paddingVertical:10, paddingLeft:10, paddingRight:4, fontSize:12, fontWeight:'500', color:'#111827', textAlignVertical:'center'},
+  subEncTxt: {fontSize:9, color:'#A89FC0', textAlign:'center', fontWeight:'600'},
+  celdaNombre: {paddingVertical:10, paddingLeft:10, paddingRight:4, fontSize:12, fontWeight:'500', color:'#F5F0FF', textAlignVertical:'center'},
   celdaView: {paddingVertical:10, paddingHorizontal:2, alignItems:'center', justifyContent:'center', borderRightWidth:1, borderRightColor:'#f1f5f9'},
   notaTxt: {fontSize:12, fontWeight:'600', color:'#059669'},
   notaVacia: {color:'#d1d5db', fontWeight:'400'},
   notaRoja: {color:'#ef4444', fontWeight:'700'},
   promTxt: {fontSize:13, fontWeight:'700', color:'#0369a1'},
-  faltasTxt: {fontSize:12, fontWeight:'700', color:'#9ca3af'},
+  faltasTxt: {fontSize:12, fontWeight:'700', color:'#5A5070'},
   finalTxt: {fontSize:14, fontWeight:'800', color:'#059669'},
   exportBtn: {
-    backgroundColor: '#1a3a6b', marginHorizontal: 12, marginVertical: 6,
+    backgroundColor: '#7C3AED', marginHorizontal: 12, marginVertical: 6,
     paddingVertical: 10, borderRadius: 8, alignItems: 'center',
   },
   exportTxt: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  resumenBar: {backgroundColor:'#1a3a6b', paddingVertical:8, alignItems:'center'},
-  resumenTxt: {color:'#93c5fd', fontSize:11},
+  resumenBar: {backgroundColor:'#7C3AED', paddingVertical:8, alignItems:'center'},
+  resumenTxt: {color:'#9F67F5', fontSize:11},
 });

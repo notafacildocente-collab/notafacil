@@ -141,8 +141,8 @@ function App() {
                 <Stack.Screen name="SeleccionarMateria" component={SeleccionarMateriaScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="SeleccionarPeriodo" component={SeleccionarPeriodoScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="Calificacion" component={CalificacionScreen} options={{ headerShown: false }} />
-                <Stack.Screen name="Asistencia" component={AsistenciaScreen} options={{ title: 'Control de Asistencia', headerBackVisible: true }} />
-                <Stack.Screen name="Planilla" component={PlanillaScreen} options={{ title: 'Malla por Grupos', headerBackVisible: true }} />
+                <Stack.Screen name="Asistencia" component={AsistenciaScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="Planilla" component={PlanillaScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="Horario" component={HorarioScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="AsignacionesProfesor" component={AsignacionesProfesorScreen} options={{ title: 'Asignaciones', headerBackVisible: true }} />
                 <Stack.Screen name="CambiarPassword" component={CambiarPasswordScreen} options={{ title: 'Cambiar Contraseña', headerBackVisible: true }} />
@@ -164,8 +164,8 @@ function App() {
                 <Stack.Screen name="SeleccionarMateria" component={SeleccionarMateriaScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="SeleccionarPeriodo" component={SeleccionarPeriodoScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="Calificacion" component={CalificacionScreen} options={{ headerShown: false }} />
-                <Stack.Screen name="Asistencia" component={AsistenciaScreen} options={{ title: 'Control de Asistencia', headerBackVisible: true }} />
-                <Stack.Screen name="Planilla" component={PlanillaScreen} options={{ title: 'Malla por Grupos', headerBackVisible: true }} />
+                <Stack.Screen name="Asistencia" component={AsistenciaScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="Planilla" component={PlanillaScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="Horario" component={HorarioScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="AsignacionesProfesor" component={AsignacionesProfesorScreen} options={{ title: 'Asignaciones', headerBackVisible: true }} />
                 <Stack.Screen name="CambiarPassword" component={CambiarPasswordScreen} options={{ title: 'Cambiar Contraseña', headerBackVisible: true }} />
