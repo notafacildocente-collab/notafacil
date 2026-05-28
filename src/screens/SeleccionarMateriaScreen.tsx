@@ -9,6 +9,8 @@ import * as SecureStore from 'expo-secure-store';
 import { apiFetch } from '../services/api';
 import { cerrarSesionGlobal } from '../services/auth';
 
+const API_URL = 'https://notafacil-backend-539h.onrender.com';
+
 interface Materia {
   id: string;
   nombre: string;
@@ -38,6 +40,7 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
   const [periodoInfo, setPeriodoInfo] = useState<{ id: string; numero: number } | null>(null);
   const [fotoUrl, setFotoUrl] = useState<string | null>(null);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
+  const [escudoUrl, setEscudoUrl] = useState<string | null>(null);
   const rolRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -46,7 +49,7 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
       rolRef.current = rol;
       if (rol === 'RECTOR') { navigation.replace('Rector'); return; }
       if (rol !== 'PROFESOR') { Alert.alert('Acceso restringido', 'Esta aplicación es exclusiva para profesores.'); return; }
-      await Promise.all([cargarMaterias(), cargarFotoPerfil()]);
+      await Promise.all([cargarMaterias(), cargarFotoPerfil(), cargarEscudo()]);
     };
     iniciar();
     const unsubscribe = navigation.addListener('focus', () => {
@@ -54,6 +57,18 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
     });
     return unsubscribe;
   }, [navigation]);
+
+  const cargarEscudo = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/config`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.logoUrl) setEscudoUrl(data.logoUrl);
+      }
+    } catch {
+      // silencioso
+    }
+  };
 
   const cargarFotoPerfil = async () => {
     try {
@@ -160,9 +175,15 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
 
       {/* HEADER */}
       <View style={styles.header}>
-        {/* Fila superior: botones Horario / Salir */}
+        {/* Fila superior: escudo + botones */}
         <View style={styles.headerTopRow}>
-          <Text style={styles.headerAppName}>NotaFácil</Text>
+          {escudoUrl ? (
+            <Image source={{ uri: escudoUrl }} style={styles.escudo} resizeMode="contain" />
+          ) : (
+            <View style={styles.escudoPlaceholder}>
+              <Ionicons name="school" size={22} color="rgba(255,255,255,0.4)" />
+            </View>
+          )}
           <View style={styles.headerBtns}>
             <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.navigate('Horario')}>
               <Text style={styles.headerBtnText}>Horario</Text>
@@ -322,7 +343,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between', marginBottom: 20,
   },
-  headerAppName: { fontSize: 15, fontWeight: '700', color: 'rgba(255,255,255,0.6)' },
+  escudo: { width: 48, height: 48, borderRadius: 6 },
+  escudoPlaceholder: {
+    width: 48, height: 48, borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    justifyContent: 'center', alignItems: 'center',
+  },
   headerBtns: { flexDirection: 'row', gap: 8 },
   headerBtn: {
     paddingHorizontal: 14, paddingVertical: 7,
