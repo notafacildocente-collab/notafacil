@@ -378,41 +378,34 @@ export default function ListadoEstudiantesScreen() {
 
       {/* ── Tabla en pantalla ── */}
       <ScrollView style={styles.scrollOuter} showsVerticalScrollIndicator={false}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={styles.tabla}>
-            <View style={styles.tablaHeader}>
-              <Text style={[styles.thCell, { width: 36 }]}>#</Text>
-              <Text style={[styles.thCell, { width: 175 }]}>APELLIDOS</Text>
-              <Text style={[styles.thCell, { width: 145 }]}>NOMBRES</Text>
-              <Text style={[styles.thCell, { width: 56, textAlign: 'center' }]}>NOTA</Text>
-              <Text style={[styles.thCell, { width: 50, textAlign: 'center' }]}>FALTAS</Text>
-            </View>
-
-            {estudiantes.length === 0 ? (
-              <View style={styles.emptyRow}>
-                <Text style={styles.emptyText}>No hay estudiantes registrados</Text>
-              </View>
-            ) : (
-              estudiantes.map((est, idx) => (
-                <View key={est.estudianteId} style={[styles.fila, idx % 2 === 0 ? styles.filaPar : styles.filaImpar]}>
-                  <Text style={[styles.tdBase, { width: 36, color: '#94A3B8', textAlign: 'center' }]}>{idx + 1}</Text>
-                  <Text style={[styles.tdBase, { width: 175, fontWeight: '700', color: '#0F172A' }]} numberOfLines={1}>
-                    {(est.apellido || '').toUpperCase()}
-                  </Text>
-                  <Text style={[styles.tdBase, { width: 145, color: '#374151' }]} numberOfLines={1}>
-                    {(est.nombre || '').toUpperCase()}
-                  </Text>
-                  <Text style={[styles.tdBase, { width: 56, textAlign: 'center', fontWeight: '800', color: colorNota(est.notaFinal) }]}>
-                    {est.notaFinal > 0 ? est.notaFinal.toFixed(1) : '—'}
-                  </Text>
-                  <Text style={[styles.tdBase, { width: 50, textAlign: 'center', color: est.faltasTotales > 0 ? '#DC2626' : '#94A3B8', fontWeight: '600' }]}>
-                    {est.faltasTotales || 0}
-                  </Text>
-                </View>
-              ))
-            )}
+        <View style={styles.tabla}>
+          {/* Encabezado */}
+          <View style={styles.tablaHeader}>
+            <Text style={[styles.thCell, { width: 36 }]}>#</Text>
+            <Text style={[styles.thCell, { flex: 1 }]}>APELLIDOS</Text>
+            <Text style={[styles.thCell, { flex: 1 }]}>NOMBRES</Text>
           </View>
-        </ScrollView>
+
+          {estudiantes.length === 0 ? (
+            <View style={styles.emptyRow}>
+              <Text style={styles.emptyText}>No hay estudiantes registrados</Text>
+            </View>
+          ) : (
+            estudiantes.map((est, idx) => (
+              <View key={est.estudianteId} style={[styles.fila, idx % 2 === 0 ? styles.filaPar : styles.filaImpar]}>
+                <Text style={[styles.tdBase, { width: 36, color: '#94A3B8', textAlign: 'center' }]}>
+                  {idx + 1}
+                </Text>
+                <Text style={[styles.tdBase, { flex: 1, fontWeight: '700', color: '#0F172A' }]} numberOfLines={1}>
+                  {(est.apellido || '').toUpperCase()}
+                </Text>
+                <Text style={[styles.tdBase, { flex: 1, color: '#374151' }]} numberOfLines={1}>
+                  {(est.nombre || '').toUpperCase()}
+                </Text>
+              </View>
+            ))
+          )}
+        </View>
         <View style={{ height: 32 }} />
       </ScrollView>
     </View>
