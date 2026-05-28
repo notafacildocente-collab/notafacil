@@ -3,6 +3,7 @@ import {
   View, Text, FlatList, TouchableOpacity,
   StyleSheet, ActivityIndicator, Alert, StatusBar,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
 import { apiFetch } from '../services/api';
 import { cerrarSesionGlobal } from '../services/auth';
@@ -12,6 +13,21 @@ interface Materia {
   nombre: string;
   codigo: string;
   asignacionId: string;
+}
+
+/** Elige el ícono Ionicons según el nombre de la materia */
+function iconoMateria(nombre: string): keyof typeof Ionicons.glyphMap {
+  const n = nombre.toLowerCase();
+  if (n.includes('tecnolog') || n.includes('inform') || n.includes('sistem')) return 'settings-outline';
+  if (n.includes('mat') || n.includes('álgebra') || n.includes('algebra') || n.includes('cálculo')) return 'calculator-outline';
+  if (n.includes('lengua') || n.includes('liter') || n.includes('español') || n.includes('lectura')) return 'book-outline';
+  if (n.includes('ciencia') || n.includes('biolog') || n.includes('quím') || n.includes('física')) return 'flask-outline';
+  if (n.includes('social') || n.includes('histor') || n.includes('geograf')) return 'earth-outline';
+  if (n.includes('arte') || n.includes('música') || n.includes('dibujo')) return 'color-palette-outline';
+  if (n.includes('educa') || n.includes('deport') || n.includes('física')) return 'fitness-outline';
+  if (n.includes('inglés') || n.includes('ingles') || n.includes('idioma')) return 'language-outline';
+  if (n.includes('ética') || n.includes('etica') || n.includes('religion') || n.includes('religión')) return 'heart-outline';
+  return 'school-outline';
 }
 
 export default function SeleccionarMateriaScreen({ navigation }: any) {
@@ -76,9 +92,7 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
     ]);
   };
 
-  const iniciales = nombre
-    ? nombre.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase()
-    : 'P';
+  const primerNombre = nombre ? nombre.split(' ')[0] : 'Profesora';
 
   if (loading) {
     return (
@@ -97,32 +111,34 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
       {/* HEADER */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
+          {/* Avatar */}
           <View style={styles.avatarWrap}>
-            <Text style={styles.avatarText}>{iniciales}</Text>
+            <Ionicons name="person" size={30} color="#FFFFFF" />
           </View>
-          <View style={styles.headerInfo}>
-            <Text style={styles.headerLabel}>Bienvenida</Text>
-            <Text style={styles.headerNombre} numberOfLines={1}>{nombre || 'Profesora'}</Text>
+
+          {/* Bienvenida + acciones */}
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerBienvenida}>Bienvenida, {primerNombre}</Text>
           </View>
-          <View style={styles.headerAcciones}>
+
+          <View style={styles.headerBtns}>
             <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.navigate('Horario')}>
               <Text style={styles.headerBtnText}>Horario</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.headerBtn, styles.headerBtnSalir]} onPress={cerrarSesion}>
+            <TouchableOpacity style={styles.headerBtn} onPress={cerrarSesion}>
               <Text style={styles.headerBtnText}>Salir</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        <View style={styles.statsRow}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNum}>{materias.length}</Text>
-            <Text style={styles.statLabel}>materias</Text>
+        {/* Chips de estadísticas */}
+        <View style={styles.chipsRow}>
+          <View style={styles.chip}>
+            <Text style={styles.chipText}>{materias.length} materias</Text>
           </View>
           {periodoInfo && (
-            <View style={[styles.statItem, styles.statItemActive]}>
-              <Text style={[styles.statNum, styles.statNumActive]}>P{periodoInfo.numero}</Text>
-              <Text style={[styles.statLabel, styles.statLabelActive]}>período activo</Text>
+            <View style={styles.chip}>
+              <Text style={styles.chipText}>P{periodoInfo.numero} período activo</Text>
             </View>
           )}
         </View>
@@ -143,67 +159,79 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.lista}
           showsVerticalScrollIndicator={false}
-          ListHeaderComponent={
-            <Text style={styles.seccionLabel}>MIS MATERIAS</Text>
-          }
           ListFooterComponent={() =>
             cursoId && periodoInfo ? (
               <TouchableOpacity
                 style={styles.botonBoletin}
-                onPress={() => navigation.navigate('Boletin', { cursoId, periodoId: periodoInfo.id, periodoNumero: periodoInfo.numero })}
+                onPress={() => navigation.navigate('Boletin', {
+                  cursoId,
+                  periodoId: periodoInfo.id,
+                  periodoNumero: periodoInfo.numero,
+                })}
               >
                 <Text style={styles.botonBoletinTexto}>Ver Boletín del Curso</Text>
-                <Text style={styles.botonBoletinFlecha}>→</Text>
+                <Ionicons name="chevron-forward" size={18} color="#64748B" />
               </TouchableOpacity>
             ) : null
           }
           renderItem={({ item }) => (
             <View style={styles.card}>
+              {/* Cabecera de la tarjeta */}
               <View style={styles.cardHeader}>
                 <View style={styles.cardIconWrap}>
-                  <Text style={styles.cardIconText}>{item.nombre.charAt(0)}</Text>
+                  <Ionicons name={iconoMateria(item.nombre)} size={22} color="#1E3A5F" />
                 </View>
-                <View style={styles.cardTitleWrap}>
-                  <Text style={styles.cardNombre}>{item.nombre}</Text>
-                  <Text style={styles.cardCodigo}>{item.codigo}</Text>
-                </View>
+                <Text style={styles.cardNombre}>{item.nombre}</Text>
               </View>
 
-              <View style={styles.divider} />
-
-              <View style={styles.btnGrid}>
+              {/* Fila 1: Calificar + Asistencia */}
+              <View style={styles.btnRow}>
                 <TouchableOpacity
-                  style={[styles.btn, styles.btnPrimary]}
-                  onPress={() => navigation.navigate('SeleccionarPeriodo', { materiaId: item.id, materiaNombre: item.nombre, modo: 'calificar' })}
+                  style={[styles.btn, styles.btnAzul]}
+                  onPress={() => navigation.navigate('SeleccionarPeriodo', {
+                    materiaId: item.id, materiaNombre: item.nombre, modo: 'calificar',
+                  })}
                 >
-                  <Text style={[styles.btnText, styles.btnTextPrimary]}>Calificar</Text>
+                  <Text style={styles.btnTextBlanco}>Calificar</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.btn, styles.btnSuccess]}
-                  onPress={() => navigation.navigate('SeleccionarPeriodo', { materiaId: item.id, materiaNombre: item.nombre, modo: 'asistencia' })}
+                  style={[styles.btn, styles.btnAzulClaro]}
+                  onPress={() => navigation.navigate('SeleccionarPeriodo', {
+                    materiaId: item.id, materiaNombre: item.nombre, modo: 'asistencia',
+                  })}
                 >
-                  <Text style={[styles.btnText, styles.btnTextSuccess]}>Asistencia</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.btn, styles.btnNeutral]}
-                  onPress={() => navigation.navigate('SeleccionarPeriodo', { materiaId: item.id, materiaNombre: item.nombre, modo: 'planilla' })}
-                >
-                  <Text style={[styles.btnText, styles.btnTextNeutral]}>Planilla</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.btn, styles.btnIA]}
-                  onPress={() => navigation.navigate('SeleccionarPeriodo', { materiaId: item.id, materiaNombre: item.nombre, modo: 'calificarIA' })}
-                >
-                  <Text style={[styles.btnText, styles.btnTextIA]}>Calif. con IA</Text>
+                  <Text style={styles.btnTextBlanco}>Asistencia</Text>
                 </TouchableOpacity>
               </View>
 
+              {/* Fila 2: Planilla + Calif. con IA */}
+              <View style={styles.btnRow}>
+                <TouchableOpacity
+                  style={[styles.btn, styles.btnGris]}
+                  onPress={() => navigation.navigate('SeleccionarPeriodo', {
+                    materiaId: item.id, materiaNombre: item.nombre, modo: 'planilla',
+                  })}
+                >
+                  <Text style={styles.btnTextGris}>Planilla</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.btn, styles.btnRosa]}
+                  onPress={() => navigation.navigate('SeleccionarPeriodo', {
+                    materiaId: item.id, materiaNombre: item.nombre, modo: 'calificarIA',
+                  })}
+                >
+                  <Text style={styles.btnTextBlanco}>Calif. con IA</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Fila 3: Análisis de Riesgo IA (ancho completo) */}
               <TouchableOpacity
                 style={styles.btnRiesgo}
-                onPress={() => navigation.navigate('SeleccionarPeriodo', { materiaId: item.id, materiaNombre: item.nombre, modo: 'riesgoIA' })}
+                onPress={() => navigation.navigate('SeleccionarPeriodo', {
+                  materiaId: item.id, materiaNombre: item.nombre, modo: 'riesgoIA',
+                })}
               >
                 <Text style={styles.btnRiesgoText}>Análisis de Riesgo IA</Text>
               </TouchableOpacity>
@@ -224,126 +252,132 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#1E3A5F',
     paddingHorizontal: 20,
-    paddingTop: 48,
+    paddingTop: 52,
     paddingBottom: 20,
   },
-  headerTop: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 12,
+  },
   avatarWrap: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: '#2563EB',
-    justifyContent: 'center', alignItems: 'center', marginRight: 12,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.25)',
   },
-  avatarText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
-  headerInfo: { flex: 1 },
-  headerLabel: { fontSize: 11, color: '#94A3B8', fontWeight: '500', letterSpacing: 0.5 },
-  headerNombre: { fontSize: 17, fontWeight: '700', color: '#FFFFFF', marginTop: 1 },
-  headerAcciones: { flexDirection: 'row', gap: 8 },
+  headerCenter: { flex: 1 },
+  headerBienvenida: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
+  },
+  headerBtns: { flexDirection: 'row', gap: 8 },
   headerBtn: {
-    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.5)',
   },
-  headerBtnSalir: { backgroundColor: 'rgba(220,38,38,0.25)' },
-  headerBtnText: { color: '#E2E8F0', fontSize: 12, fontWeight: '600' },
+  headerBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '600' },
 
-  statsRow: { flexDirection: 'row', gap: 10 },
-  statItem: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7,
+  // ── Chips ────────────────────────────────────────────────────────────────────
+  chipsRow: { flexDirection: 'row', gap: 8 },
+  chip: {
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
   },
-  statItemActive: { backgroundColor: 'rgba(37,99,235,0.3)' },
-  statNum: { fontSize: 14, fontWeight: '800', color: '#FFFFFF' },
-  statNumActive: { color: '#93C5FD' },
-  statLabel: { fontSize: 12, color: '#64748B' },
-  statLabelActive: { color: '#BFDBFE' },
+  chipText: { color: '#E2E8F0', fontSize: 13, fontWeight: '600' },
 
   // ── Lista ───────────────────────────────────────────────────────────────────
-  lista: { padding: 16, paddingBottom: 40 },
-  seccionLabel: {
-    fontSize: 11, fontWeight: '700', color: '#94A3B8',
-    letterSpacing: 1.2, textTransform: 'uppercase',
-    marginBottom: 12,
-  },
+  lista: { padding: 16, paddingBottom: 32 },
 
   // ── Vacío ───────────────────────────────────────────────────────────────────
   emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 36 },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: '#1E293B', marginBottom: 8 },
   emptyDesc: { fontSize: 14, color: '#64748B', textAlign: 'center', marginBottom: 24 },
-  retryBtn: {
-    backgroundColor: '#1E3A5F', paddingHorizontal: 28, paddingVertical: 12, borderRadius: 8,
-  },
+  retryBtn: { backgroundColor: '#1E3A5F', paddingHorizontal: 28, paddingVertical: 12, borderRadius: 8 },
   retryText: { color: '#FFFFFF', fontWeight: '600' },
 
   // ── Tarjeta ─────────────────────────────────────────────────────────────────
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 16,
     marginBottom: 12,
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
     elevation: 2,
   },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+    gap: 12,
+  },
   cardIconWrap: {
-    width: 40, height: 40, borderRadius: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     backgroundColor: '#EFF6FF',
-    justifyContent: 'center', alignItems: 'center', marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  cardIconText: { fontSize: 18, fontWeight: '800', color: '#2563EB' },
-  cardTitleWrap: { flex: 1 },
-  cardNombre: { fontSize: 16, fontWeight: '700', color: '#0F172A' },
-  cardCodigo: { fontSize: 12, color: '#94A3B8', marginTop: 2 },
+  cardNombre: { fontSize: 17, fontWeight: '700', color: '#0F172A', flex: 1 },
 
-  divider: { height: 1, backgroundColor: '#F1F5F9', marginBottom: 12 },
-
-  // ── Botones 2×2 ─────────────────────────────────────────────────────────────
-  btnGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+  // ── Filas de botones ─────────────────────────────────────────────────────────
+  btnRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
   btn: {
-    width: '47.5%',
-    paddingVertical: 10,
-    borderRadius: 8,
+    flex: 1,
+    paddingVertical: 11,
+    borderRadius: 10,
     alignItems: 'center',
-    borderWidth: 1,
+    justifyContent: 'center',
   },
-  btnText: { fontSize: 13, fontWeight: '600' },
 
-  btnPrimary:     { backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' },
-  btnTextPrimary: { color: '#2563EB' },
+  btnAzul:       { backgroundColor: '#2563EB' },
+  btnAzulClaro:  { backgroundColor: '#0EA5E9' },
+  btnGris:       { backgroundColor: '#E2E8F0' },
+  btnRosa:       { backgroundColor: '#F43F5E' },
 
-  btnSuccess:     { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0' },
-  btnTextSuccess: { color: '#16A34A' },
+  btnTextBlanco: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
+  btnTextGris:   { color: '#475569', fontWeight: '700', fontSize: 13 },
 
-  btnNeutral:     { backgroundColor: '#F8FAFC', borderColor: '#E2E8F0' },
-  btnTextNeutral: { color: '#475569' },
-
-  btnIA:          { backgroundColor: '#FDF4FF', borderColor: '#E9D5FF' },
-  btnTextIA:      { color: '#7C3AED' },
-
-  // ── Riesgo (full width) ─────────────────────────────────────────────────────
+  // ── Riesgo (ancho completo) ──────────────────────────────────────────────────
   btnRiesgo: {
-    paddingVertical: 10, borderRadius: 8,
-    backgroundColor: '#F5F3FF', borderWidth: 1, borderColor: '#DDD6FE',
+    paddingVertical: 11,
+    borderRadius: 10,
+    backgroundColor: '#7C3AED',
     alignItems: 'center',
   },
-  btnRiesgoText: { fontSize: 13, fontWeight: '600', color: '#7C3AED' },
+  btnRiesgoText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
 
   // ── Boletín footer ──────────────────────────────────────────────────────────
   botonBoletin: {
-    backgroundColor: '#1E3A5F',
-    borderRadius: 12,
-    paddingVertical: 15,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingVertical: 16,
     paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 4,
-    marginBottom: 8,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  botonBoletinTexto: { color: '#FFFFFF', fontWeight: '700', fontSize: 15 },
-  botonBoletinFlecha: { color: '#93C5FD', fontSize: 20, fontWeight: '600' },
+  botonBoletinTexto: { color: '#0F172A', fontWeight: '700', fontSize: 15 },
 });
