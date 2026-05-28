@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, ActivityIndicator, Alert, Image,
+  StyleSheet, ActivityIndicator, Alert, Image, StatusBar,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { apiFetch } from '../services/api';
 import { cerrarSesionGlobal } from '../services/auth';
@@ -37,18 +38,10 @@ export default function RectorScreen({ navigation }: any) {
   const [logoLoading, setLogoLoading] = useState(false);
 
   const cerrarSesion = () => {
-    Alert.alert(
-      'Cerrar sesión',
-      '¿Está seguro que desea salir?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Salir',
-          style: 'destructive',
-          onPress: () => cerrarSesionGlobal(),
-        },
-      ],
-    );
+    Alert.alert('Cerrar sesión', '¿Está seguro que desea salir?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Salir', style: 'destructive', onPress: () => cerrarSesionGlobal() },
+    ]);
   };
 
   useEffect(() => {
@@ -68,7 +61,10 @@ export default function RectorScreen({ navigation }: any) {
       if (resPeriodos.ok) setPeriodos(await resPeriodos.json());
       if (resProfesores.ok) setProfesores(await resProfesores.json());
       if (resResumen.ok) setResumen(await resResumen.json());
-      if (resLogo.ok) { const logoData = await resLogo.json(); setLogoActual(logoData.logoUrl); }
+      if (resLogo.ok) {
+        const logoData = await resLogo.json();
+        setLogoActual(logoData.logoUrl);
+      }
     } catch (error: any) {
       if (error.message !== 'Sesión vencida') {
         Alert.alert('Error', 'No se pudieron cargar los datos');
@@ -122,9 +118,7 @@ export default function RectorScreen({ navigation }: any) {
           onPress: async () => {
             try {
               setAccionando(true);
-              const res = await apiFetch(`/api/rector/periodos/${periodo.id}/abrir`, {
-                method: 'PUT',
-              });
+              const res = await apiFetch(`/api/rector/periodos/${periodo.id}/abrir`, { method: 'PUT' });
               if (res.ok) {
                 Alert.alert('Éxito', `Período ${periodo.numero} abierto correctamente`);
                 cargarDatos();
@@ -133,9 +127,7 @@ export default function RectorScreen({ navigation }: any) {
                 Alert.alert('Error', err.message || 'No se pudo abrir el período');
               }
             } catch (error: any) {
-              if (error.message !== 'Sesión vencida') {
-                Alert.alert('Error', 'No se pudo conectar al servidor');
-              }
+              if (error.message !== 'Sesión vencida') Alert.alert('Error', 'No se pudo conectar al servidor');
             } finally {
               setAccionando(false);
             }
@@ -157,9 +149,7 @@ export default function RectorScreen({ navigation }: any) {
           onPress: async () => {
             try {
               setAccionando(true);
-              const res = await apiFetch(`/api/rector/periodos/${periodo.id}/cerrar`, {
-                method: 'PUT',
-              });
+              const res = await apiFetch(`/api/rector/periodos/${periodo.id}/cerrar`, { method: 'PUT' });
               if (res.ok) {
                 Alert.alert('Éxito', `Período ${periodo.numero} cerrado correctamente`);
                 cargarDatos();
@@ -167,9 +157,7 @@ export default function RectorScreen({ navigation }: any) {
                 Alert.alert('Error', 'No se pudo cerrar el período');
               }
             } catch (error: any) {
-              if (error.message !== 'Sesión vencida') {
-                Alert.alert('Error', 'No se pudo conectar al servidor');
-              }
+              if (error.message !== 'Sesión vencida') Alert.alert('Error', 'No se pudo conectar al servidor');
             } finally {
               setAccionando(false);
             }
@@ -179,222 +167,236 @@ export default function RectorScreen({ navigation }: any) {
     );
   };
 
-  const handleVerAsignaciones = (profesor: Profesor) => {
-    navigation.navigate('AsignacionesProfesor', { profesor });
-  };
-
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#1a3a6b" />
+      <View style={styles.loadingContainer}>
+        <StatusBar barStyle="light-content" backgroundColor="#1E3A5F" />
+        <ActivityIndicator size="large" color="#2563EB" />
         <Text style={styles.loadingText}>Cargando panel rector...</Text>
       </View>
     );
   }
 
-  return (
-    <ScrollView style={styles.container}>
+  const periodoActivoNum = resumen?.periodoActivo?.replace(/\D/g, '') || '—';
 
-      {/* Header con salir */}
-      <View style={styles.headerBar}>
+  return (
+    <View style={styles.flex}>
+      <StatusBar barStyle="light-content" backgroundColor="#1E3A5F" />
+
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      <View style={styles.header}>
         <Text style={styles.headerTitulo}>Panel Rector</Text>
         <TouchableOpacity style={styles.botonSalir} onPress={cerrarSesion}>
-          <Text style={styles.botonSalirTexto}>Salir</Text>
+          <Text style={styles.botonSalirTexto}>Cerrar Sesión</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Resumen */}
-      {resumen && (
-        <View style={styles.resumenRow}>
-          <View style={styles.resumenCard}>
-            <Text style={styles.resumenNumero}>{resumen.totalProfesores}</Text>
-            <Text style={styles.resumenLabel}>Profesores</Text>
-          </View>
-          <View style={styles.resumenCard}>
-            <Text style={styles.resumenNumero}>{resumen.totalCursos}</Text>
-            <Text style={styles.resumenLabel}>Cursos</Text>
-          </View>
-          <View style={[styles.resumenCard, { backgroundColor: '#1E3A5F', borderColor: '#1E3A5F' }]}>
-            <Text style={[styles.resumenNumero, { color: '#FFFFFF', fontSize: 13 }]}>
-              {resumen.periodoActivo}
-            </Text>
-            <Text style={[styles.resumenLabel, { color: '#93C5FD' }]}>Período Activo</Text>
-          </View>
-        </View>
-      )}
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
 
-      {/* Logo del colegio */}
-      <Text style={styles.seccionTitulo}>Logo del Colegio</Text>
-      <View style={styles.logoCard}>
-        {logoActual ? (
-          <Image source={{ uri: logoActual }} style={styles.logoPreview} resizeMode="contain" />
-        ) : (
-          <View style={styles.logoPlaceholder}>
-            <Text style={styles.logoPlaceholderIcon}>🏫</Text>
-            <Text style={styles.logoPlaceholderText}>Sin logo</Text>
-          </View>
-        )}
-        <TouchableOpacity
-          style={[styles.logoBtn, logoLoading && { opacity: 0.6 }]}
-          onPress={handleSubirLogo}
-          disabled={logoLoading}
-        >
-          {logoLoading
-            ? <ActivityIndicator size="small" color="#fff" />
-            : <Text style={styles.logoBtnText}>📷 {logoActual ? 'Cambiar logo' : 'Subir logo'}</Text>
-          }
-        </TouchableOpacity>
-        <Text style={styles.logoHint}>El logo aparecerá en los boletines individuales PDF</Text>
-      </View>
-
-      {/* Períodos */}
-      <Text style={styles.seccionTitulo}>Períodos</Text>
-      {periodos.map((periodo) => (
-        <View key={periodo.id} style={styles.periodoCard}>
-          <View style={styles.periodoInfo}>
-            <Text style={styles.periodoNombre}>Período {periodo.numero}</Text>
-            <View style={[
-              styles.estadoBadge,
-              { backgroundColor: periodo.cerrado ? '#ef4444' : '#10b981' }
-            ]}>
-              <Text style={styles.estadoBadgeText}>
-                {periodo.cerrado ? 'Cerrado' : 'Abierto'}
-              </Text>
+        {/* ── Estadísticas ──────────────────────────────────────────────────── */}
+        {resumen && (
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <Text style={styles.statNum}>{resumen.totalProfesores}</Text>
+              <Text style={styles.statLabel}>Profesores</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statNum}>{resumen.totalCursos}</Text>
+              <Text style={styles.statLabel}>Cursos</Text>
+            </View>
+            <View style={[styles.statCard, styles.statCardActivo]}>
+              <Text style={styles.statNumActivo}>Período{'\n'}Activo: {periodoActivoNum}</Text>
+              <Text style={styles.statLabelActivo}>Período Activo</Text>
             </View>
           </View>
-          <Text style={styles.periodoFechas}>
-            {periodo.fechaInicio?.slice(0, 10)} → {periodo.fechaFin?.slice(0, 10)}
-          </Text>
-          <View style={styles.periodoAcciones}>
+        )}
+
+        {/* ── Configuración de Institución ──────────────────────────────────── */}
+        <Text style={styles.seccionTitulo}>Configuración de Institución</Text>
+        <View style={styles.card}>
+          {logoActual ? (
+            <Image source={{ uri: logoActual }} style={styles.logoImg} resizeMode="contain" />
+          ) : (
+            <View style={styles.logoPlaceholder}>
+              <Ionicons name="school-outline" size={56} color="#CBD5E1" />
+              <Text style={styles.logoPlaceholderText}>Sin logo</Text>
+            </View>
+          )}
+          <TouchableOpacity
+            style={[styles.logoBtn, logoLoading && { opacity: 0.6 }]}
+            onPress={handleSubirLogo}
+            disabled={logoLoading}
+          >
+            {logoLoading
+              ? <ActivityIndicator size="small" color="#fff" />
+              : <Text style={styles.logoBtnText}>📷 Actualizar Logo</Text>
+            }
+          </TouchableOpacity>
+          <Text style={styles.logoHint}>El logo aparecerá en los boletines individuales PDF</Text>
+        </View>
+
+        {/* ── Gestión de Períodos ───────────────────────────────────────────── */}
+        <Text style={styles.seccionTitulo}>Gestión de Períodos</Text>
+        {periodos.map((periodo) => (
+          <View key={periodo.id} style={styles.card}>
+            <View style={styles.periodoTop}>
+              <View>
+                <Text style={styles.periodoNombre}>Período {periodo.numero}</Text>
+                <Text style={styles.periodoFechas}>
+                  {periodo.fechaInicio?.slice(0, 10)} → {periodo.fechaFin?.slice(0, 10)}
+                </Text>
+              </View>
+              <View style={[styles.badge, periodo.cerrado ? styles.badgeCerrado : styles.badgeAbierto]}>
+                <Text style={styles.badgeText}>{periodo.cerrado ? 'Cerrado' : 'Abierto'}</Text>
+              </View>
+            </View>
+
             {periodo.cerrado ? (
               <TouchableOpacity
-                style={[styles.accionBtn, styles.abrirBtn]}
+                style={[styles.periodoBtn, styles.periodoBtnAbrir]}
                 onPress={() => handleAbrirPeriodo(periodo)}
                 disabled={accionando}
               >
-                <Text style={styles.accionBtnText}>Abrir</Text>
+                <Text style={styles.periodoBtnText}>Abrir Período</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                style={[styles.accionBtn, styles.cerrarBtn]}
+                style={[styles.periodoBtn, styles.periodoBtnCerrar]}
                 onPress={() => handleCerrarPeriodo(periodo)}
                 disabled={accionando}
               >
-                <Text style={styles.accionBtnText}>Cerrar</Text>
+                <Text style={styles.periodoBtnText}>Cerrar Período</Text>
               </TouchableOpacity>
             )}
           </View>
-        </View>
-      ))}
+        ))}
 
-      {/* Profesores */}
-      <Text style={styles.seccionTitulo}>Profesores</Text>
-      {profesores.map((profesor) => (
-        <TouchableOpacity
-          key={profesor.id}
-          style={styles.profesorCard}
-          onPress={() => handleVerAsignaciones(profesor)}
-        >
-          <View style={styles.profesorAvatar}>
-            <Text style={styles.profesorAvatarText}>
-              {profesor.nombre.charAt(0).toUpperCase()}
-            </Text>
-          </View>
-          <View style={styles.profesorInfo}>
-            <Text style={styles.profesorNombre}>{profesor.nombre}</Text>
-            <Text style={styles.profesorEmail}>{profesor.email}</Text>
-          </View>
-          <Text style={styles.arrow}>›</Text>
-        </TouchableOpacity>
-      ))}
+        {/* ── Directorio de Docentes ────────────────────────────────────────── */}
+        <Text style={styles.seccionTitulo}>Directorio de Docentes</Text>
+        {profesores.map((profesor) => (
+          <TouchableOpacity
+            key={profesor.id}
+            style={[styles.card, styles.profesorCard]}
+            onPress={() => navigation.navigate('AsignacionesProfesor', { profesor })}
+          >
+            <View style={styles.profesorAvatar}>
+              <Text style={styles.profesorAvatarText}>
+                {profesor.nombre.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+            <View style={styles.profesorInfo}>
+              <Text style={styles.profesorNombre}>{profesor.nombre}</Text>
+              <Text style={styles.profesorEmail}>{profesor.email}</Text>
+            </View>
+            <View style={styles.verPerfilBtn}>
+              <Text style={styles.verPerfilTexto}>Ver Perfil</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
 
-      <View style={{ height: 32 }} />
-    </ScrollView>
+        <View style={{ height: 40 }} />
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F1F5F9', padding: 16 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 12, color: '#64748B' },
+  flex: { flex: 1, backgroundColor: '#F1F5F9' },
+  loadingContainer: { flex: 1, backgroundColor: '#1E3A5F', justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 14, color: '#94A3B8', fontSize: 15 },
 
-  headerBar: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', marginBottom: 20,
-  },
-  headerTitulo: { fontSize: 20, fontWeight: '800', color: '#0F172A' },
-  botonSalir: {
-    backgroundColor: 'rgba(220,38,38,0.1)', paddingHorizontal: 14,
-    paddingVertical: 8, borderRadius: 8,
-    borderWidth: 1, borderColor: 'rgba(220,38,38,0.25)',
-  },
-  botonSalirTexto: { color: '#DC2626', fontWeight: '700', fontSize: 13 },
-
-  resumenRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
-  resumenCard: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 14,
+  // ── Header ────────────────────────────────────────────────────────────────
+  header: {
+    backgroundColor: '#1E3A5F',
+    paddingHorizontal: 20,
+    paddingTop: 52,
+    paddingBottom: 18,
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    elevation: 1,
+    justifyContent: 'space-between',
   },
-  resumenNumero: { fontSize: 24, fontWeight: '800', color: '#1E3A5F' },
-  resumenLabel: { fontSize: 11, color: '#64748B', marginTop: 4, fontWeight: '600' },
+  headerTitulo: { fontSize: 24, fontWeight: '800', color: '#FFFFFF' },
+  botonSalir: {
+    borderWidth: 1.5,
+    borderColor: '#F87171',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+  },
+  botonSalirTexto: { color: '#F87171', fontWeight: '700', fontSize: 13 },
 
+  container: { flex: 1, padding: 16 },
+
+  // ── Estadísticas ──────────────────────────────────────────────────────────
+  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 24 },
+  statCard: {
+    flex: 1, backgroundColor: '#FFFFFF', borderRadius: 14,
+    padding: 14, alignItems: 'center',
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
+  },
+  statCardActivo: { backgroundColor: '#1E3A5F' },
+  statNum: { fontSize: 28, fontWeight: '800', color: '#2563EB' },
+  statLabel: { fontSize: 12, color: '#64748B', marginTop: 2, fontWeight: '600' },
+  statNumActivo: { fontSize: 14, fontWeight: '800', color: '#FFFFFF', textAlign: 'center', lineHeight: 20 },
+  statLabelActivo: { fontSize: 11, color: '#93C5FD', marginTop: 4, fontWeight: '600' },
+
+  // ── Sección título ────────────────────────────────────────────────────────
   seccionTitulo: {
-    fontSize: 12, fontWeight: '700', color: '#94A3B8',
-    letterSpacing: 1.2, textTransform: 'uppercase',
-    marginBottom: 10, marginTop: 8,
+    fontSize: 18, fontWeight: '800', color: '#0F172A',
+    marginBottom: 12, marginTop: 4,
   },
 
-  periodoCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16,
-    marginBottom: 10, borderWidth: 1, borderColor: '#E2E8F0', elevation: 1,
+  // ── Card base ─────────────────────────────────────────────────────────────
+  card: {
+    backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16,
+    marginBottom: 12,
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
   },
-  periodoInfo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-  periodoNombre: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
-  estadoBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  estadoBadgeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '700' },
-  periodoFechas: { fontSize: 12, color: '#94A3B8', marginBottom: 10 },
-  periodoAcciones: { flexDirection: 'row', justifyContent: 'flex-end' },
-  accionBtn: { paddingHorizontal: 20, paddingVertical: 8, borderRadius: 8 },
-  abrirBtn: { backgroundColor: '#16A34A' },
-  cerrarBtn: { backgroundColor: '#DC2626' },
-  accionBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
 
-  profesorCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16,
-    marginBottom: 10, borderWidth: 1, borderColor: '#E2E8F0',
-    elevation: 1, flexDirection: 'row', alignItems: 'center',
-  },
-  profesorAvatar: {
-    width: 42, height: 42, borderRadius: 21,
-    backgroundColor: '#1E3A5F', alignItems: 'center', justifyContent: 'center',
-    marginRight: 12,
-  },
-  profesorAvatarText: { color: '#FFFFFF', fontWeight: '700', fontSize: 16 },
-  profesorInfo: { flex: 1 },
-  profesorNombre: { fontSize: 14, fontWeight: '700', color: '#0F172A' },
-  profesorEmail: { fontSize: 12, color: '#64748B', marginTop: 2 },
-  arrow: { fontSize: 20, color: '#CBD5E1' },
-
-  // Logo
-  logoCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16,
-    marginBottom: 18, borderWidth: 1, borderColor: '#E2E8F0',
-    elevation: 1, alignItems: 'center',
-  },
-  logoPreview: { width: 200, height: 120, marginBottom: 12 },
-  logoPlaceholder: { alignItems: 'center', marginBottom: 12 },
-  logoPlaceholderIcon: { fontSize: 36 },
-  logoPlaceholderText: { fontSize: 12, color: '#94A3B8', marginTop: 4 },
+  // ── Logo ──────────────────────────────────────────────────────────────────
+  logoImg: { width: '100%', height: 180, marginBottom: 16 },
+  logoPlaceholder: { alignItems: 'center', paddingVertical: 28, marginBottom: 12 },
+  logoPlaceholderText: { fontSize: 13, color: '#94A3B8', marginTop: 8 },
   logoBtn: {
-    backgroundColor: '#1E3A5F', paddingHorizontal: 24, paddingVertical: 10,
-    borderRadius: 8, minWidth: 140, alignItems: 'center',
+    backgroundColor: '#1E3A5F', borderRadius: 10,
+    paddingVertical: 13, alignItems: 'center', marginBottom: 10,
   },
-  logoBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
-  logoHint: { fontSize: 11, color: '#94A3B8', marginTop: 8, textAlign: 'center' },
+  logoBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 15 },
+  logoHint: { fontSize: 12, color: '#94A3B8', textAlign: 'center' },
+
+  // ── Período ───────────────────────────────────────────────────────────────
+  periodoTop: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'flex-start', marginBottom: 14,
+  },
+  periodoNombre: { fontSize: 16, fontWeight: '700', color: '#0F172A', marginBottom: 4 },
+  periodoFechas: { fontSize: 13, color: '#64748B' },
+  badge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20 },
+  badgeAbierto: { backgroundColor: '#22C55E' },
+  badgeCerrado: { backgroundColor: '#EF4444' },
+  badgeText: { color: '#FFFFFF', fontWeight: '700', fontSize: 12 },
+  periodoBtn: {
+    borderRadius: 10, paddingVertical: 12, alignItems: 'center',
+  },
+  periodoBtnAbrir: { backgroundColor: '#16A34A' },
+  periodoBtnCerrar: { backgroundColor: '#DC2626' },
+  periodoBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
+
+  // ── Profesor ──────────────────────────────────────────────────────────────
+  profesorCard: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  profesorAvatar: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: '#2563EB', alignItems: 'center', justifyContent: 'center',
+  },
+  profesorAvatarText: { color: '#FFFFFF', fontWeight: '700', fontSize: 18 },
+  profesorInfo: { flex: 1 },
+  profesorNombre: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
+  profesorEmail: { fontSize: 12, color: '#64748B', marginTop: 2 },
+  verPerfilBtn: {
+    borderWidth: 1.5, borderColor: '#CBD5E1',
+    borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6,
+  },
+  verPerfilTexto: { color: '#475569', fontWeight: '600', fontSize: 13 },
 });
