@@ -5,6 +5,7 @@ import {
   StyleSheet, Platform, Image, Linking,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { apiFetch } from '../services/api';
 
@@ -413,6 +414,16 @@ export default function CalificacionScreen() {
       </ScrollView>
 
 
+      {/* Botón Calificar con IA — acceso rápido */}
+      <TouchableOpacity
+        style={styles.bannerIA}
+        onPress={() => (navigation as any).navigate('CalificarIA', { asignacionId, materiaId, materiaNombre, periodoId, periodoNumero })}
+        activeOpacity={0.85}
+      >
+        <Text style={styles.bannerIAText}>📷 Calificar con IA</Text>
+        <Ionicons name="chevron-forward" size={16} color="#2563EB" />
+      </TouchableOpacity>
+
       <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollPadding}>
         <View style={styles.estudianteCard}>
           <View style={{ flex: 1 }}>
@@ -697,6 +708,13 @@ const styles = StyleSheet.create({
   chipActivo: { backgroundColor: '#1E3A5F', borderColor: '#1E3A5F' },
   chipText: { fontSize: 13, color: '#475569' },
   chipTextActivo: { color: '#FFFFFF', fontWeight: '600' },
+
+  bannerIA: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: '#EFF6FF', paddingHorizontal: 16, paddingVertical: 11,
+    borderBottomWidth: 1, borderBottomColor: '#BFDBFE',
+  },
+  bannerIAText: { color: '#1E3A5F', fontWeight: '700', fontSize: 14 },
 
   scrollContent: { flex: 1 },
   scrollPadding: { padding: 16 },

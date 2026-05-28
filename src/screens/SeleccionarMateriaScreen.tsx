@@ -282,12 +282,12 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
                   <Text style={styles.btnTextGris}>Planilla</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.btn, styles.btnRosa]}
+                  style={[styles.btn, styles.btnTeal]}
                   onPress={() => navigation.navigate('SeleccionarPeriodo', {
-                    materiaId: item.id, materiaNombre: item.nombre, modo: 'calificarIA',
+                    materiaId: item.id, materiaNombre: item.nombre, modo: 'listado',
                   })}
                 >
-                  <Text style={styles.btnTextBlanco}>Calif. con IA</Text>
+                  <Text style={styles.btnTextBlanco}>Listado</Text>
                 </TouchableOpacity>
               </View>
 
@@ -388,6 +388,7 @@ const styles = StyleSheet.create({
   btnAzulClaro: { backgroundColor: '#0EA5E9' },
   btnGris:      { backgroundColor: '#E2E8F0' },
   btnRosa:      { backgroundColor: '#F43F5E' },
+  btnTeal:      { backgroundColor: '#0891B2' },
 
   btnTextBlanco: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
   btnTextGris:   { color: '#475569', fontWeight: '700', fontSize: 13 },

@@ -28,6 +28,7 @@ import ReporteScreen from './screens/ReporteScreen';
 import ConfigurarDesempenosScreen from './screens/ConfigurarDesempenosScreen';
 import CalificarIAScreen from './screens/CalificarIAScreen';
 import RiesgoScreen from './screens/RiesgoScreen';
+import ListadoEstudiantesScreen from './screens/ListadoEstudiantesScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -101,6 +102,7 @@ function App() {
                 <Stack.Screen name="ConfigurarDesempenos" component={ConfigurarDesempenosScreen} options={{ title: 'Configurar Desempeños', headerBackVisible: true }} />
                 <Stack.Screen name="Rector" component={RectorScreen} options={{ title: 'Panel Rector', headerBackVisible: false }} />
                 <Stack.Screen name="Riesgo" component={RiesgoScreen} options={{ title: 'Riesgo Académico', headerBackVisible: true, headerStyle: { backgroundColor: '#7c3aed' }, headerTintColor: '#fff', headerTitleStyle: { fontWeight: '700' } }} />
+                <Stack.Screen name="Listado" component={ListadoEstudiantesScreen} options={{ headerShown: false }} />
               </>
             ) : (
               <>

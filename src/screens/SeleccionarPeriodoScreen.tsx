@@ -43,8 +43,8 @@ export default function SeleccionarPeriodoScreen({ navigation, route }: any) {
   };
 
   const handleSeleccionarPeriodo = async (periodo: Periodo) => {
-    // Los modos 'reporte', 'calificarIA' y 'riesgoIA' permiten ver períodos cerrados
-    if (periodo.cerrado && modo !== 'reporte' && modo !== 'calificarIA' && modo !== 'riesgoIA') {
+    // Los modos 'reporte', 'calificarIA', 'riesgoIA' y 'listado' permiten ver períodos cerrados
+    if (periodo.cerrado && modo !== 'reporte' && modo !== 'calificarIA' && modo !== 'riesgoIA' && modo !== 'listado') {
       Alert.alert('Periodo cerrado', 'Este periodo no permite modificaciones.');
       return;
     }
@@ -78,6 +78,8 @@ export default function SeleccionarPeriodoScreen({ navigation, route }: any) {
         navigation.navigate('CalificarIA', params);
       } else if (modo === 'riesgoIA') {
         navigation.navigate('Riesgo', { ...params, materiaNombre, periodoNumero: periodo.numero });
+      } else if (modo === 'listado') {
+        navigation.navigate('Listado', { ...params, materiaNombre, periodoNumero: periodo.numero });
       } else {
         navigation.navigate('Calificacion', params);
       }
@@ -118,7 +120,7 @@ export default function SeleccionarPeriodoScreen({ navigation, route }: any) {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={[styles.card, item.cerrado && modo !== 'reporte' && modo !== 'calificarIA' && modo !== 'riesgoIA' && styles.cardCerrado]}
+              style={[styles.card, item.cerrado && modo !== 'reporte' && modo !== 'calificarIA' && modo !== 'riesgoIA' && modo !== 'listado' && styles.cardCerrado]}
               onPress={() => handleSeleccionarPeriodo(item)}
               disabled={navegando}
             >
