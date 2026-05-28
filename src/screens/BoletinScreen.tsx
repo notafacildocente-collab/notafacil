@@ -3,7 +3,8 @@ import {
   View, Text, ScrollView, StyleSheet,
   ActivityIndicator, Alert, TouchableOpacity,
 } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { apiFetch } from '../services/api';
 import { exportarBoletinPDF, exportarBoletinIndividualPDF } from '../services/exportarPDF';
 
@@ -16,6 +17,7 @@ const CELDA_PDF = 38;
 
 export default function BoletinScreen() {
   const route = useRoute();
+  const navigation = useNavigation();
   const { cursoId, periodoId, periodoNumero, cursoNombre } = (route.params || {}) as any;
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -73,7 +75,10 @@ export default function BoletinScreen() {
     <View style={styles.flex}>
       {/* Header */}
       <View style={styles.headerBar}>
-        <View>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={20} color="#ffffff" />
+        </TouchableOpacity>
+        <View style={{ flex: 1 }}>
           <Text style={styles.headerTitulo}>Boletín · Período {periodoNumero}</Text>
           <Text style={styles.headerSub}>{cursoNombre || 'Consolidado del Curso'}</Text>
         </View>
@@ -173,42 +178,32 @@ export default function BoletinScreen() {
   );
 }
 
+
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#f3f4f6' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingTxt: { marginTop: 12, color: '#6b7280' },
-  headerBar: {
-    backgroundColor: '#1a3a6b', paddingHorizontal: 16, paddingVertical: 12,
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-  },
-  headerTitulo: { color: '#fff', fontWeight: '700', fontSize: 16 },
-  headerSub: { color: '#93c5fd', fontSize: 12, marginTop: 2 },
-  leyenda: { alignItems: 'flex-end', gap: 3 },
-  leyendaTxt: { fontSize: 11, fontWeight: '600' },
-  fila: {
-    flexDirection: 'row', alignItems: 'center',
-    borderBottomWidth: 1, borderBottomColor: '#e5e7eb', backgroundColor: '#fff',
-  },
-  filaPar: { backgroundColor: '#f9fafb' },
-  enc: {
-    paddingVertical: 9, paddingHorizontal: 3, textAlign: 'center',
-    fontSize: 11, fontWeight: '700', color: '#1a3a6b', backgroundColor: '#eff6ff',
-    borderRightWidth: 1, borderRightColor: '#bfdbfe',
-  },
-  encNombre: { textAlign: 'left', paddingLeft: 10 },
-  celda: { paddingVertical: 9, paddingHorizontal: 3, fontSize: 12, color: '#1f2937' },
-  celdaNombre: { fontWeight: '500', color: '#111827', paddingLeft: 10 },
-  puestoTxt: { textAlign: 'center', color: '#6b7280', fontWeight: '700', fontSize: 11 },
-  notaRoja: { color: '#ef4444', fontWeight: '700' },
-  notaVacia: { color: '#d1d5db' },
-  faltasTxt: { textAlign: 'center', color: '#9ca3af' },
-  promTxt: { textAlign: 'center', fontWeight: '800', fontSize: 13, color: '#059669' },
-  pdfBtn: { justifyContent: 'center', alignItems: 'center', paddingVertical: 9 },
-  exportBtn: {
-    backgroundColor: '#1a3a6b', marginHorizontal: 12, marginVertical: 6,
-    paddingVertical: 10, borderRadius: 8, alignItems: 'center',
-  },
-  exportTxt: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  resumenBar: { backgroundColor: '#1a3a6b', paddingVertical: 8, alignItems: 'center' },
-  resumenTxt: { color: '#93c5fd', fontSize: 11 },
+  flex:        { flex: 1, backgroundColor: '#0D0A1A' },
+  center:      { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0D0A1A' },
+  loadingTxt:  { marginTop: 12, color: '#A89FC0' },
+  headerBar:   { backgroundColor: '#150F2A', paddingHorizontal: 16, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: 2, borderBottomColor: '#7C3AED' },
+  backBtn:     { width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center' },
+  headerTitulo:{ color: '#F5F0FF', fontWeight: '700', fontSize: 16 },
+  headerSub:   { color: '#A89FC0', fontSize: 12, marginTop: 2 },
+  leyenda:     { alignItems: 'flex-end', gap: 3 },
+  leyendaTxt:  { fontSize: 11, fontWeight: '600' },
+  // Tabla
+  fila:        { flexDirection: 'row', alignItems: 'center', borderBottomWidth: 0.5, borderBottomColor: 'rgba(255,255,255,0.07)', backgroundColor: '#1C1435' },
+  filaPar:     { backgroundColor: '#150F2A' },
+  enc:         { paddingVertical: 9, paddingHorizontal: 3, textAlign: 'center', fontSize: 11, fontWeight: '700', color: '#9F67F5', backgroundColor: '#231A40', borderRightWidth: 0.5, borderRightColor: 'rgba(124,58,237,0.3)' },
+  encNombre:   { textAlign: 'left', paddingLeft: 10 },
+  celda:       { paddingVertical: 9, paddingHorizontal: 3, fontSize: 12, color: '#F5F0FF' },
+  celdaNombre: { fontWeight: '500', color: '#F5F0FF', paddingLeft: 10 },
+  puestoTxt:   { textAlign: 'center', color: '#A89FC0', fontWeight: '700', fontSize: 11 },
+  notaRoja:    { color: '#F87171', fontWeight: '700' },
+  notaVacia:   { color: '#5A5070' },
+  faltasTxt:   { textAlign: 'center', color: '#A89FC0' },
+  promTxt:     { textAlign: 'center', fontWeight: '800', fontSize: 13, color: '#10B981' },
+  pdfBtn:      { justifyContent: 'center', alignItems: 'center', paddingVertical: 9 },
+  exportBtn:   { backgroundColor: '#7C3AED', marginHorizontal: 12, marginVertical: 6, paddingVertical: 12, borderRadius: 10, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 },
+  exportTxt:   { color: '#F5F0FF', fontWeight: '700', fontSize: 14 },
+  resumenBar:  { backgroundColor: '#150F2A', paddingVertical: 10, alignItems: 'center', borderTopWidth: 0.5, borderTopColor: 'rgba(255,255,255,0.07)' },
+  resumenTxt:  { color: '#5A5070', fontSize: 11 },
 });
