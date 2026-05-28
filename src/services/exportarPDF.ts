@@ -81,7 +81,7 @@ export async function exportarBoletinIndividualPDF(data: any, puesto?: number) {
 
   <div class="student-box">
     <div>
-      <div class="student-name">${estudiante.apellido}, ${estudiante.nombre}</div>
+      <div class="student-name">${estudiante.apellido} ${estudiante.nombre}</div>
       <div class="student-meta">
         <span>📋 Doc: ${estudiante.numeroDocumento}</span>
         <span>🏫 Curso: ${curso.nombre || '—'}</span>

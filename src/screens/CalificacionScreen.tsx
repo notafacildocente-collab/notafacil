@@ -400,13 +400,13 @@ export default function CalificacionScreen() {
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll} contentContainerStyle={styles.chipContainer}>
         {estudiantes
-          .filter((e) => busquedaEst.trim() === '' || `${e.nombre} ${e.apellido}`.toLowerCase().includes(busquedaEst.toLowerCase()))
+          .filter((e) => busquedaEst.trim() === '' || `${e.apellido} ${e.nombre}`.toLowerCase().includes(busquedaEst.toLowerCase()))
           .map((est) => {
           const activo = est.id === estudianteActivo?.id;
           return (
             <TouchableOpacity key={est.id} style={[styles.chip, activo && styles.chipActivo]} onPress={() => setEstudianteActivo(est)}>
               <Text style={[styles.chipText, activo && styles.chipTextActivo]} numberOfLines={1}>
-                {est.nombre} {est.apellido}
+                {est.apellido} {est.nombre}
               </Text>
             </TouchableOpacity>
           );

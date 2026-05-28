@@ -173,68 +173,6 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
     <View style={styles.flex}>
       <StatusBar barStyle="light-content" backgroundColor="#1E3A5F" />
 
-      {/* HEADER */}
-      <View style={styles.header}>
-        {/* Fila superior: escudo + botones */}
-        <View style={styles.headerTopRow}>
-          {escudoUrl ? (
-            <Image source={{ uri: escudoUrl }} style={styles.escudo} resizeMode="contain" />
-          ) : (
-            <View style={styles.escudoPlaceholder}>
-              <Ionicons name="school" size={22} color="rgba(255,255,255,0.4)" />
-            </View>
-          )}
-          <View style={styles.headerBtns}>
-            <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.navigate('Horario')}>
-              <Text style={styles.headerBtnText}>Horario</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.headerBtn} onPress={cerrarSesion}>
-              <Text style={styles.headerBtnText}>Salir</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Fila inferior: avatar grande + info */}
-        <View style={styles.headerBottom}>
-          {/* Avatar — toca para cambiar foto */}
-          <TouchableOpacity
-            style={styles.avatarWrap}
-            onPress={handleCambiarFoto}
-            disabled={subiendoFoto}
-            activeOpacity={0.8}
-          >
-            {subiendoFoto ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : fotoUrl ? (
-              <Image source={{ uri: fotoUrl }} style={styles.avatarImg} />
-            ) : (
-              <Ionicons name="person" size={48} color="rgba(255,255,255,0.7)" />
-            )}
-            {!subiendoFoto && (
-              <View style={styles.camaraIcon}>
-                <Ionicons name="camera" size={12} color="#FFFFFF" />
-              </View>
-            )}
-          </TouchableOpacity>
-
-          {/* Nombre y chips */}
-          <View style={styles.headerInfo}>
-            <Text style={styles.headerBienvenida}>Bienvenida,</Text>
-            <Text style={styles.headerNombre}>{primerNombre}</Text>
-            <View style={styles.chipsRow}>
-              <View style={styles.chip}>
-                <Text style={styles.chipText}>{materias.length} materias</Text>
-              </View>
-              {periodoInfo && (
-                <View style={styles.chip}>
-                  <Text style={styles.chipText}>P{periodoInfo.numero} activo</Text>
-                </View>
-              )}
-            </View>
-          </View>
-        </View>
-      </View>
-
       {/* LISTA */}
       {materias.length === 0 ? (
         <View style={styles.emptyWrap}>
@@ -250,21 +188,111 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.lista}
           showsVerticalScrollIndicator={false}
-          ListFooterComponent={() =>
-            cursoId && periodoInfo ? (
-              <TouchableOpacity
-                style={styles.botonBoletin}
-                onPress={() => navigation.navigate('Boletin', {
-                  cursoId,
-                  periodoId: periodoInfo.id,
-                  periodoNumero: periodoInfo.numero,
-                })}
-              >
-                <Text style={styles.botonBoletinTexto}>Ver Boletín del Curso</Text>
-                <Ionicons name="chevron-forward" size={18} color="#64748B" />
-              </TouchableOpacity>
-            ) : null
+          ListHeaderComponent={
+            <View style={styles.headerScrollable}>
+              {/* Fila superior: solo botones a la derecha */}
+              <View style={styles.headerTopRow}>
+                <View style={{ flex: 1 }} />
+                <View style={styles.headerBtns}>
+                  <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.navigate('Horario')}>
+                    <Text style={styles.headerBtnText}>Horario</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.headerBtn} onPress={cerrarSesion}>
+                    <Text style={styles.headerBtnText}>Salir</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Fila inferior: avatar + info + escudo a la derecha */}
+              <View style={styles.headerBottom}>
+                <TouchableOpacity
+                  style={styles.avatarWrap}
+                  onPress={handleCambiarFoto}
+                  disabled={subiendoFoto}
+                  activeOpacity={0.8}
+                >
+                  {subiendoFoto ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : fotoUrl ? (
+                    <Image source={{ uri: fotoUrl }} style={styles.avatarImg} />
+                  ) : (
+                    <Ionicons name="person" size={48} color="rgba(255,255,255,0.7)" />
+                  )}
+                  {!subiendoFoto && (
+                    <View style={styles.camaraIcon}>
+                      <Ionicons name="camera" size={12} color="#FFFFFF" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+
+                <View style={styles.headerInfo}>
+                  <Text style={styles.headerBienvenida}>Bienvenida,</Text>
+                  <Text style={styles.headerNombre}>{primerNombre}</Text>
+                  <View style={styles.chipsRow}>
+                    <View style={styles.chip}>
+                      <Text style={styles.chipText}>{materias.length} materias</Text>
+                    </View>
+                    {periodoInfo && (
+                      <View style={styles.chip}>
+                        <Text style={styles.chipText}>P{periodoInfo.numero} activo</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+
+                {/* Escudo a la derecha de Suleyma */}
+                {escudoUrl ? (
+                  <Image source={{ uri: escudoUrl }} style={styles.escudoDerecha} resizeMode="contain" />
+                ) : (
+                  <View style={styles.escudoDerechaPlaceholder}>
+                    <Ionicons name="school" size={30} color="rgba(255,255,255,0.4)" />
+                  </View>
+                )}
+              </View>
+            </View>
           }
+          ListFooterComponent={() => (
+            <View style={styles.footerBotones}>
+              {cursoId && periodoInfo && (
+                <TouchableOpacity
+                  style={styles.botonBoletin}
+                  onPress={() => navigation.navigate('Boletin', {
+                    cursoId,
+                    periodoId: periodoInfo.id,
+                    periodoNumero: periodoInfo.numero,
+                  })}
+                >
+                  <Ionicons name="document-text-outline" size={20} color="#64748B" />
+                  <Text style={styles.botonBoletinTexto}>Ver Boletín del Curso</Text>
+                  <Ionicons name="chevron-forward" size={18} color="#64748B" />
+                </TouchableOpacity>
+              )}
+              {materias.length > 0 && periodoInfo && (
+                <TouchableOpacity
+                  style={styles.botonListado}
+                  onPress={() => navigation.navigate('SeleccionarPeriodo', {
+                    materiaId: materias[0].id,
+                    materiaNombre: 'Listado de Estudiantes',
+                    modo: 'listado',
+                  })}
+                >
+                  <Ionicons name="people-outline" size={20} color="#0891B2" />
+                  <Text style={styles.botonListadoTexto}>Listado de Estudiantes</Text>
+                  <Ionicons name="chevron-forward" size={18} color="#0891B2" />
+                </TouchableOpacity>
+              )}
+              {cursoId && (
+                <TouchableOpacity
+                  style={styles.botonRetiros}
+                  onPress={() => navigation.navigate('Retiros', { cursoId })}
+                >
+                  <Ionicons name="exit-outline" size={20} color="#DC2626" />
+                  <Text style={styles.botonRetirosTexto}>Retiros de Estudiantes</Text>
+                  <Ionicons name="chevron-forward" size={18} color="#DC2626" />
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
           renderItem={({ item }) => (
             <View style={styles.card}>
               <View style={styles.cardHeader}>
@@ -302,14 +330,6 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
                 >
                   <Text style={styles.btnTextGris}>Planilla</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.btn, styles.btnTeal]}
-                  onPress={() => navigation.navigate('SeleccionarPeriodo', {
-                    materiaId: item.id, materiaNombre: item.nombre, modo: 'listado',
-                  })}
-                >
-                  <Text style={styles.btnTextBlanco}>Listado</Text>
-                </TouchableOpacity>
               </View>
 
               <TouchableOpacity
@@ -333,19 +353,22 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, backgroundColor: '#1E3A5F', justifyContent: 'center', alignItems: 'center' },
   loadingText: { marginTop: 14, color: '#94A3B8', fontSize: 15 },
 
-  header: {
+  headerScrollable: {
     backgroundColor: '#1E3A5F',
     paddingHorizontal: 20,
     paddingTop: 52,
     paddingBottom: 20,
+    marginHorizontal: -16,
+    marginTop: -16,
+    marginBottom: 16,
   },
   headerTopRow: {
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between', marginBottom: 20,
   },
-  escudo: { width: 48, height: 48, borderRadius: 6 },
-  escudoPlaceholder: {
-    width: 48, height: 48, borderRadius: 6,
+  escudoDerecha: { width: 64, height: 64, borderRadius: 8 },
+  escudoDerechaPlaceholder: {
+    width: 64, height: 64, borderRadius: 8,
     backgroundColor: 'rgba(255,255,255,0.08)',
     justifyContent: 'center', alignItems: 'center',
   },
@@ -387,7 +410,7 @@ const styles = StyleSheet.create({
   },
   chipText: { color: '#E2E8F0', fontSize: 12, fontWeight: '600' },
 
-  lista: { padding: 16, paddingBottom: 32 },
+  lista: { padding: 16, paddingTop: 16, paddingBottom: 32 },
 
   emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 36 },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: '#1E293B', marginBottom: 8 },
@@ -425,13 +448,30 @@ const styles = StyleSheet.create({
   },
   btnRiesgoText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
 
+  footerBotones: { gap: 10, paddingTop: 4, paddingBottom: 32 },
+
   botonBoletin: {
     backgroundColor: '#FFFFFF', borderRadius: 14,
     paddingVertical: 16, paddingHorizontal: 20,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    marginTop: 4,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
     shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
   },
-  botonBoletinTexto: { color: '#0F172A', fontWeight: '700', fontSize: 15 },
+  botonBoletinTexto: { color: '#0F172A', fontWeight: '700', fontSize: 15, flex: 1 },
+
+  botonListado: {
+    backgroundColor: '#ECFEFF', borderRadius: 14,
+    paddingVertical: 16, paddingHorizontal: 20,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    borderWidth: 1, borderColor: '#A5F3FC',
+  },
+  botonListadoTexto: { color: '#0E7490', fontWeight: '700', fontSize: 15, flex: 1 },
+
+  botonRetiros: {
+    backgroundColor: '#FEF2F2', borderRadius: 14,
+    paddingVertical: 16, paddingHorizontal: 20,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    borderWidth: 1, borderColor: '#FECACA',
+  },
+  botonRetirosTexto: { color: '#DC2626', fontWeight: '700', fontSize: 15, flex: 1 },
 });

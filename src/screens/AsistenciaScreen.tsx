@@ -332,7 +332,7 @@ export default function AsistenciaScreen() {
                 {/* Nombre y documento */}
                 <View style={styles.estudianteInfo}>
                   <Text style={styles.estudianteNombre}>
-                    {est.apellido}, {est.nombre}
+                    {est.apellido} {est.nombre}
                   </Text>
                   <Text style={styles.estudianteDoc}>{est.numeroDocumento}</Text>
                 </View>

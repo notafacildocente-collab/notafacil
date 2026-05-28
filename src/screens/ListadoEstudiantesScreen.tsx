@@ -77,8 +77,7 @@ export default function ListadoEstudiantesScreen() {
       const filas = estudiantes.map((est, idx) => `
         <tr>
           <td class="num">${idx + 1}</td>
-          <td class="apellidos">${(est.apellido || '').toUpperCase()}</td>
-          <td class="nombres">${(est.nombre || '').toUpperCase()}</td>
+          <td class="estudiante">${((est.apellido || '') + ' ' + (est.nombre || '')).toUpperCase().trim()}</td>
           <td class="firma"></td>
         </tr>
       `).join('');
@@ -196,7 +195,7 @@ export default function ListadoEstudiantesScreen() {
     vertical-align: middle;
   }
   td.num { text-align: center; color: #777; font-size: 11px; }
-  td.apellidos { font-weight: 700; }
+  td.estudiante { font-weight: 700; }
   td.firma {
     border-bottom: 1px solid #000 !important;
     height: 28px;
@@ -266,8 +265,7 @@ export default function ListadoEstudiantesScreen() {
     <thead>
       <tr>
         <th class="num">#</th>
-        <th>Apellidos</th>
-        <th>Nombres</th>
+        <th>Estudiante</th>
         <th class="firma">Firma</th>
       </tr>
     </thead>
@@ -382,8 +380,7 @@ export default function ListadoEstudiantesScreen() {
           {/* Encabezado */}
           <View style={styles.tablaHeader}>
             <Text style={[styles.thCell, { width: 36 }]}>#</Text>
-            <Text style={[styles.thCell, { flex: 1 }]}>APELLIDOS</Text>
-            <Text style={[styles.thCell, { flex: 1 }]}>NOMBRES</Text>
+            <Text style={[styles.thCell, { flex: 1 }]}>ESTUDIANTE</Text>
           </View>
 
           {estudiantes.length === 0 ? (
@@ -397,10 +394,7 @@ export default function ListadoEstudiantesScreen() {
                   {idx + 1}
                 </Text>
                 <Text style={[styles.tdBase, { flex: 1, fontWeight: '700', color: '#0F172A' }]} numberOfLines={1}>
-                  {(est.apellido || '').toUpperCase()}
-                </Text>
-                <Text style={[styles.tdBase, { flex: 1, color: '#374151' }]} numberOfLines={1}>
-                  {(est.nombre || '').toUpperCase()}
+                  {((est.apellido || '') + ' ' + (est.nombre || '')).toUpperCase().trim()}
                 </Text>
               </View>
             ))
