@@ -297,53 +297,20 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
             </View>
           )}
           renderItem={({ item }) => (
-            <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardIconWrap}>
-                  <Ionicons name={iconoMateria(item.nombre)} size={22} color="#1E3A5F" />
-                </View>
-                <Text style={styles.cardNombre}>{item.nombre}</Text>
+            <TouchableOpacity
+              style={styles.card}
+              activeOpacity={0.75}
+              onPress={() => (navigation as any).navigate('MateriaDetalle', {
+                materiaId: item.id,
+                materiaNombre: item.nombre,
+              })}
+            >
+              <View style={styles.cardIconWrap}>
+                <Ionicons name={iconoMateria(item.nombre)} size={24} color="#1E3A5F" />
               </View>
-
-              <View style={styles.btnRow}>
-                <TouchableOpacity
-                  style={[styles.btn, styles.btnAzul]}
-                  onPress={() => navigation.navigate('SeleccionarPeriodo', {
-                    materiaId: item.id, materiaNombre: item.nombre, modo: 'calificar',
-                  })}
-                >
-                  <Text style={styles.btnTextBlanco}>Calificar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.btn, styles.btnAzulClaro]}
-                  onPress={() => navigation.navigate('SeleccionarPeriodo', {
-                    materiaId: item.id, materiaNombre: item.nombre, modo: 'asistencia',
-                  })}
-                >
-                  <Text style={styles.btnTextBlanco}>Asistencia</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.btnRow}>
-                <TouchableOpacity
-                  style={[styles.btn, styles.btnGris]}
-                  onPress={() => navigation.navigate('SeleccionarPeriodo', {
-                    materiaId: item.id, materiaNombre: item.nombre, modo: 'planilla',
-                  })}
-                >
-                  <Text style={styles.btnTextGris}>Planilla</Text>
-                </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity
-                style={styles.btnRiesgo}
-                onPress={() => navigation.navigate('SeleccionarPeriodo', {
-                  materiaId: item.id, materiaNombre: item.nombre, modo: 'riesgoIA',
-                })}
-              >
-                <Text style={styles.btnRiesgoText}>Análisis de Riesgo IA</Text>
-              </TouchableOpacity>
-            </View>
+              <Text style={styles.cardNombre} numberOfLines={2}>{item.nombre}</Text>
+              <Ionicons name="chevron-forward" size={20} color="#CBD5E1" />
+            </TouchableOpacity>
           )}
         />
       )}
@@ -422,34 +389,18 @@ const styles = StyleSheet.create({
   retryText: { color: '#FFFFFF', fontWeight: '600' },
 
   card: {
-    backgroundColor: '#FFFFFF', borderRadius: 16, marginBottom: 12, padding: 16,
-    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
+    backgroundColor: '#FFFFFF', borderRadius: 14, marginBottom: 8,
+    paddingVertical: 14, paddingHorizontal: 16,
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
+    borderWidth: 1, borderColor: '#E2E8F0',
   },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 14, gap: 12 },
   cardIconWrap: {
-    width: 44, height: 44, borderRadius: 12,
+    width: 46, height: 46, borderRadius: 12,
     backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center',
   },
-  cardNombre: { fontSize: 17, fontWeight: '700', color: '#0F172A', flex: 1 },
-
-  btnRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
-  btn: { flex: 1, paddingVertical: 11, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-
-  btnAzul:      { backgroundColor: '#2563EB' },
-  btnAzulClaro: { backgroundColor: '#0EA5E9' },
-  btnGris:      { backgroundColor: '#E2E8F0' },
-  btnRosa:      { backgroundColor: '#F43F5E' },
-  btnTeal:      { backgroundColor: '#0891B2' },
-
-  btnTextBlanco: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
-  btnTextGris:   { color: '#475569', fontWeight: '700', fontSize: 13 },
-
-  btnRiesgo: {
-    paddingVertical: 11, borderRadius: 10,
-    backgroundColor: '#7C3AED', alignItems: 'center',
-  },
-  btnRiesgoText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
+  cardNombre: { fontSize: 16, fontWeight: '700', color: '#0F172A', flex: 1 },
 
   footerBotones: { gap: 10, paddingTop: 4, paddingBottom: 32 },
 
