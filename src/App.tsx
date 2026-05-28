@@ -11,7 +11,12 @@ import { initializeDatabase } from './services/watermelonDB';
 import { syncService } from './services/sync';
 import { registrarCerrarSesion } from './services/auth';
 
+// ── Pantallas generales ──────────────────────────────────────────────────────
 import LoginScreen from './screens/LoginScreen';
+import SplashScreen from './screens/SplashScreen';
+import RecuperarPasswordScreen from './screens/RecuperarPasswordScreen';
+
+// ── Pantallas de profesor / rector ───────────────────────────────────────────
 import SeleccionarMateriaScreen from './screens/SeleccionarMateriaScreen';
 import SeleccionarPeriodoScreen from './screens/SeleccionarPeriodoScreen';
 import CalificacionScreen from './screens/CalificacionScreen';
@@ -22,8 +27,6 @@ import AsignacionesProfesorScreen from './screens/AsignacionesProfesorScreen';
 import CambiarPasswordScreen from './screens/CambiarPasswordScreen';
 import BoletinScreen from './screens/BoletinScreen';
 import RectorScreen from './screens/RectorScreen';
-import RecuperarPasswordScreen from './screens/RecuperarPasswordScreen';
-import SplashScreen from './screens/SplashScreen';
 import ReporteScreen from './screens/ReporteScreen';
 import ConfigurarDesempenosScreen from './screens/ConfigurarDesempenosScreen';
 import CalificarIAScreen from './screens/CalificarIAScreen';
@@ -33,17 +36,27 @@ import RetirosScreen from './screens/RetirosScreen';
 import MateriaDetalleScreen from './screens/MateriaDetalleScreen';
 import CarnetEstudiantesScreen from './screens/CarnetEstudiantesScreen';
 
+// ── Pantallas de estudiante ───────────────────────────────────────────────────
+import EstudianteScreen from './screens/EstudianteScreen';
+import EstudianteNotasScreen from './screens/EstudianteNotasScreen';
+import EstudianteHorarioScreen from './screens/EstudianteHorarioScreen';
+import EstudianteAsistenciaScreen from './screens/EstudianteAsistenciaScreen';
+import EstudianteBoletinScreen from './screens/EstudianteBoletinScreen';
+
 const Stack = createNativeStackNavigator();
 
 function App() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSignedIn, setIsSignedIn] = React.useState(false);
+  const [rol, setRol] = React.useState<string>('');
   const appState = React.useRef(AppState.currentState);
 
   const checkToken = async () => {
     const token = await SecureStore.getItemAsync('accessToken');
     const refreshToken = await SecureStore.getItemAsync('refreshToken');
+    const rolGuardado = await SecureStore.getItemAsync('rol') || '';
     setIsSignedIn(!!token && !!refreshToken);
+    setRol(rolGuardado);
   };
 
   const logout = async () => {
@@ -53,6 +66,13 @@ function App() {
     await SecureStore.deleteItemAsync('rol');
     await SecureStore.deleteItemAsync('nombre');
     setIsSignedIn(false);
+    setRol('');
+  };
+
+  const handleLoginSuccess = async () => {
+    const rolGuardado = await SecureStore.getItemAsync('rol') || '';
+    setRol(rolGuardado);
+    setIsSignedIn(true);
   };
 
   useEffect(() => {
@@ -84,12 +104,62 @@ function App() {
 
   if (isLoading) return <SplashScreen />;
 
+  const esEstudiante = isSignedIn && rol === 'ESTUDIANTE';
+  const esRector    = isSignedIn && rol === 'RECTOR';
+  const esProfesor  = isSignedIn && (rol === 'PROFESOR' || rol === 'COORDINADOR' || (!rol && isSignedIn));
+
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <NavigationContainer>
           <Stack.Navigator screenOptions={{ headerShown: true, headerTitleAlign: 'center' }}>
-            {isSignedIn ? (
+
+            {/* ── Sin sesión ── */}
+            {!isSignedIn ? (
+              <>
+                <Stack.Screen name="Login" options={{ headerShown: false }}>
+                  {(props) => <LoginScreen {...props} onLogin={handleLoginSuccess} />}
+                </Stack.Screen>
+                <Stack.Screen name="RecuperarPassword" component={RecuperarPasswordScreen} options={{ title: 'Recuperar Contraseña' }} />
+              </>
+            ) : esEstudiante ? (
+
+              /* ── Panel Estudiante ── */
+              <>
+                <Stack.Screen name="EstudianteHome" component={EstudianteScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="EstudianteNotas" component={EstudianteNotasScreen} options={{ title: 'Mis Notas', headerBackVisible: true }} />
+                <Stack.Screen name="EstudianteHorario" component={EstudianteHorarioScreen} options={{ title: 'Mi Horario', headerBackVisible: true }} />
+                <Stack.Screen name="EstudianteAsistencia" component={EstudianteAsistenciaScreen} options={{ title: 'Mi Asistencia', headerBackVisible: true }} />
+                <Stack.Screen name="EstudianteBoletin" component={EstudianteBoletinScreen} options={{ title: 'Boletín', headerBackVisible: true }} />
+              </>
+
+            ) : esRector ? (
+
+              /* ── Panel Rector (inicia en RectorScreen) ── */
+              <>
+                <Stack.Screen name="Rector" component={RectorScreen} options={{ title: 'Panel Rector', headerBackVisible: false }} />
+                <Stack.Screen name="SeleccionarMateria" component={SeleccionarMateriaScreen} options={{ title: 'Mis Materias', headerBackVisible: true }} />
+                <Stack.Screen name="SeleccionarPeriodo" component={SeleccionarPeriodoScreen} options={{ title: 'Seleccionar Periodo' }} />
+                <Stack.Screen name="Calificacion" component={CalificacionScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="Asistencia" component={AsistenciaScreen} options={{ title: 'Control de Asistencia', headerBackVisible: true }} />
+                <Stack.Screen name="Planilla" component={PlanillaScreen} options={{ title: 'Malla por Grupos', headerBackVisible: true }} />
+                <Stack.Screen name="Horario" component={HorarioScreen} options={{ title: 'Mi Horario', headerBackVisible: true }} />
+                <Stack.Screen name="AsignacionesProfesor" component={AsignacionesProfesorScreen} options={{ title: 'Asignaciones', headerBackVisible: true }} />
+                <Stack.Screen name="CambiarPassword" component={CambiarPasswordScreen} options={{ title: 'Cambiar Contraseña', headerBackVisible: true }} />
+                <Stack.Screen name="Boletin" component={BoletinScreen} options={{ title: 'Boletín del Curso', headerBackVisible: true }} />
+                <Stack.Screen name="Reporte" component={ReporteScreen} options={{ title: 'Reporte a padres', headerBackVisible: true }} />
+                <Stack.Screen name="CalificarIA" component={CalificarIAScreen} options={{ title: 'Calificar con IA', headerBackVisible: true, headerStyle: { backgroundColor: '#7c3aed' }, headerTintColor: '#fff', headerTitleStyle: { fontWeight: '700' } }} />
+                <Stack.Screen name="ConfigurarDesempenos" component={ConfigurarDesempenosScreen} options={{ title: 'Configurar Desempeños', headerBackVisible: true }} />
+                <Stack.Screen name="Riesgo" component={RiesgoScreen} options={{ title: 'Riesgo Académico', headerBackVisible: true, headerStyle: { backgroundColor: '#7c3aed' }, headerTintColor: '#fff', headerTitleStyle: { fontWeight: '700' } }} />
+                <Stack.Screen name="Listado" component={ListadoEstudiantesScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="Retiros" component={RetirosScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="MateriaDetalle" component={MateriaDetalleScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="CarnetEstudiantes" component={CarnetEstudiantesScreen} options={{ headerShown: false }} />
+              </>
+
+            ) : (
+
+              /* ── Panel Profesor (default) ── */
               <>
                 <Stack.Screen name="SeleccionarMateria" component={SeleccionarMateriaScreen} options={{ title: 'Mis Materias', headerBackVisible: false }} />
                 <Stack.Screen name="SeleccionarPeriodo" component={SeleccionarPeriodoScreen} options={{ title: 'Seleccionar Periodo' }} />
@@ -98,7 +168,7 @@ function App() {
                 <Stack.Screen name="Planilla" component={PlanillaScreen} options={{ title: 'Malla por Grupos', headerBackVisible: true }} />
                 <Stack.Screen name="Horario" component={HorarioScreen} options={{ title: 'Mi Horario', headerBackVisible: true }} />
                 <Stack.Screen name="AsignacionesProfesor" component={AsignacionesProfesorScreen} options={{ title: 'Asignaciones', headerBackVisible: true }} />
-                <Stack.Screen name="CambiarPassword" component={CambiarPasswordScreen} options={{ title: 'Cambiar Contrasena', headerBackVisible: true }} />
+                <Stack.Screen name="CambiarPassword" component={CambiarPasswordScreen} options={{ title: 'Cambiar Contraseña', headerBackVisible: true }} />
                 <Stack.Screen name="Boletin" component={BoletinScreen} options={{ title: 'Boletín del Curso', headerBackVisible: true }} />
                 <Stack.Screen name="Reporte" component={ReporteScreen} options={{ title: 'Reporte a padres', headerBackVisible: true }} />
                 <Stack.Screen name="CalificarIA" component={CalificarIAScreen} options={{ title: 'Calificar con IA', headerBackVisible: true, headerStyle: { backgroundColor: '#7c3aed' }, headerTintColor: '#fff', headerTitleStyle: { fontWeight: '700' } }} />
@@ -110,14 +180,8 @@ function App() {
                 <Stack.Screen name="MateriaDetalle" component={MateriaDetalleScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="CarnetEstudiantes" component={CarnetEstudiantesScreen} options={{ headerShown: false }} />
               </>
-            ) : (
-              <>
-                <Stack.Screen name="Login" options={{ headerShown: false }}>
-                  {(props) => <LoginScreen {...props} onLogin={() => setIsSignedIn(true)} />}
-                </Stack.Screen>
-                <Stack.Screen name="RecuperarPassword" component={RecuperarPasswordScreen} options={{ title: 'Recuperar Contrasena' }} />
-              </>
             )}
+
           </Stack.Navigator>
         </NavigationContainer>
       </PersistGate>
