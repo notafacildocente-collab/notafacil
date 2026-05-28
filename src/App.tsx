@@ -137,16 +137,16 @@ function App() {
 
               /* ── Panel Rector (inicia en RectorScreen) ── */
               <>
-                <Stack.Screen name="Rector" component={RectorScreen} options={{ title: 'Panel Rector', headerBackVisible: false }} />
-                <Stack.Screen name="SeleccionarMateria" component={SeleccionarMateriaScreen} options={{ title: 'Mis Materias', headerBackVisible: true }} />
-                <Stack.Screen name="SeleccionarPeriodo" component={SeleccionarPeriodoScreen} options={{ title: 'Seleccionar Periodo' }} />
+                <Stack.Screen name="Rector" component={RectorScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="SeleccionarMateria" component={SeleccionarMateriaScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="SeleccionarPeriodo" component={SeleccionarPeriodoScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="Calificacion" component={CalificacionScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="Asistencia" component={AsistenciaScreen} options={{ title: 'Control de Asistencia', headerBackVisible: true }} />
                 <Stack.Screen name="Planilla" component={PlanillaScreen} options={{ title: 'Malla por Grupos', headerBackVisible: true }} />
-                <Stack.Screen name="Horario" component={HorarioScreen} options={{ title: 'Mi Horario', headerBackVisible: true }} />
+                <Stack.Screen name="Horario" component={HorarioScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="AsignacionesProfesor" component={AsignacionesProfesorScreen} options={{ title: 'Asignaciones', headerBackVisible: true }} />
                 <Stack.Screen name="CambiarPassword" component={CambiarPasswordScreen} options={{ title: 'Cambiar Contraseña', headerBackVisible: true }} />
-                <Stack.Screen name="Boletin" component={BoletinScreen} options={{ title: 'Boletín del Curso', headerBackVisible: true }} />
+                <Stack.Screen name="Boletin" component={BoletinScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="Reporte" component={ReporteScreen} options={{ title: 'Reporte a padres', headerBackVisible: true }} />
                 <Stack.Screen name="CalificarIA" component={CalificarIAScreen} options={{ title: 'Calificar con IA', headerBackVisible: true, headerStyle: { backgroundColor: '#7c3aed' }, headerTintColor: '#fff', headerTitleStyle: { fontWeight: '700' } }} />
                 <Stack.Screen name="ConfigurarDesempenos" component={ConfigurarDesempenosScreen} options={{ title: 'Configurar Desempeños', headerBackVisible: true }} />
@@ -161,15 +161,15 @@ function App() {
 
               /* ── Panel Profesor (default) ── */
               <>
-                <Stack.Screen name="SeleccionarMateria" component={SeleccionarMateriaScreen} options={{ title: 'Mis Materias', headerBackVisible: false }} />
-                <Stack.Screen name="SeleccionarPeriodo" component={SeleccionarPeriodoScreen} options={{ title: 'Seleccionar Periodo' }} />
+                <Stack.Screen name="SeleccionarMateria" component={SeleccionarMateriaScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="SeleccionarPeriodo" component={SeleccionarPeriodoScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="Calificacion" component={CalificacionScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="Asistencia" component={AsistenciaScreen} options={{ title: 'Control de Asistencia', headerBackVisible: true }} />
                 <Stack.Screen name="Planilla" component={PlanillaScreen} options={{ title: 'Malla por Grupos', headerBackVisible: true }} />
-                <Stack.Screen name="Horario" component={HorarioScreen} options={{ title: 'Mi Horario', headerBackVisible: true }} />
+                <Stack.Screen name="Horario" component={HorarioScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="AsignacionesProfesor" component={AsignacionesProfesorScreen} options={{ title: 'Asignaciones', headerBackVisible: true }} />
                 <Stack.Screen name="CambiarPassword" component={CambiarPasswordScreen} options={{ title: 'Cambiar Contraseña', headerBackVisible: true }} />
-                <Stack.Screen name="Boletin" component={BoletinScreen} options={{ title: 'Boletín del Curso', headerBackVisible: true }} />
+                <Stack.Screen name="Boletin" component={BoletinScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="Reporte" component={ReporteScreen} options={{ title: 'Reporte a padres', headerBackVisible: true }} />
                 <Stack.Screen name="CalificarIA" component={CalificarIAScreen} options={{ title: 'Calificar con IA', headerBackVisible: true, headerStyle: { backgroundColor: '#7c3aed' }, headerTintColor: '#fff', headerTitleStyle: { fontWeight: '700' } }} />
                 <Stack.Screen name="ConfigurarDesempenos" component={ConfigurarDesempenosScreen} options={{ title: 'Configurar Desempeños', headerBackVisible: true }} />
