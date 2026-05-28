@@ -197,6 +197,9 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
                   <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.navigate('Horario')}>
                     <Text style={styles.headerBtnText}>Horario</Text>
                   </TouchableOpacity>
+                  <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.navigate('CambiarPassword')}>
+                    <Text style={styles.headerBtnText}>Contraseña</Text>
+                  </TouchableOpacity>
                   <TouchableOpacity style={styles.headerBtn} onPress={cerrarSesion}>
                     <Text style={styles.headerBtnText}>Salir</Text>
                   </TouchableOpacity>
