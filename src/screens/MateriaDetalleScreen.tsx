@@ -8,15 +8,17 @@ import { Ionicons } from '@expo/vector-icons';
 
 function iconoMateria(nombre: string): keyof typeof Ionicons.glyphMap {
   const n = nombre.toLowerCase();
-  if (n.includes('tecnolog') || n.includes('inform') || n.includes('sistem')) return 'settings-outline';
-  if (n.includes('mat') || n.includes('álgebra') || n.includes('algebra') || n.includes('cálculo')) return 'calculator-outline';
-  if (n.includes('lengua') || n.includes('liter') || n.includes('español') || n.includes('lectura')) return 'book-outline';
-  if (n.includes('ciencia') || n.includes('biolog') || n.includes('quím') || n.includes('física')) return 'flask-outline';
-  if (n.includes('social') || n.includes('histor') || n.includes('geograf')) return 'earth-outline';
-  if (n.includes('arte') || n.includes('música') || n.includes('dibujo')) return 'color-palette-outline';
-  if (n.includes('educa') || n.includes('deport')) return 'fitness-outline';
-  if (n.includes('inglés') || n.includes('ingles') || n.includes('idioma')) return 'language-outline';
-  if (n.includes('ética') || n.includes('etica') || n.includes('religion') || n.includes('religión')) return 'heart-outline';
+  if (n.includes('tecnolog') || n.includes('inform') || n.includes('sistem')) return 'laptop-outline';
+  if (n.includes('mat') || n.includes('álgebra') || n.includes('algebra') || n.includes('cálculo') || n.includes('calculo')) return 'infinite-outline';
+  if (n.includes('lengua') || n.includes('liter') || n.includes('español') || n.includes('lectura') || n.includes('castella')) return 'book-outline';
+  if (n.includes('artíst') || n.includes('artist') || n.includes('arte') || n.includes('dibujo') || n.includes('plást') || n.includes('plast')) return 'brush-outline';
+  if (n.includes('música') || n.includes('musica')) return 'musical-notes-outline';
+  if (n.includes('social') || n.includes('histor') || n.includes('geograf') || n.includes('civica') || n.includes('cívica')) return 'megaphone-outline';
+  if (n.includes('educa') || n.includes('deport')) return 'walk-outline';
+  if (n.includes('ciencia') || n.includes('biolog') || n.includes('quím') || n.includes('quim') || n.includes('físic') || n.includes('fisic')) return 'flask-outline';
+  if (n.includes('inglés') || n.includes('ingles') || n.includes('idioma') || n.includes('frances') || n.includes('francés')) return 'language-outline';
+  if (n.includes('ética') || n.includes('etica') || n.includes('conviv') || n.includes('moral')) return 'people-outline';
+  if (n.includes('religion') || n.includes('religión') || n.includes('relig')) return 'hand-right-outline';
   return 'school-outline';
 }
 

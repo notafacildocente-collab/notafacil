@@ -20,15 +20,28 @@ interface Materia {
 
 function iconoMateria(nombre: string): keyof typeof Ionicons.glyphMap {
   const n = nombre.toLowerCase();
-  if (n.includes('tecnolog') || n.includes('inform') || n.includes('sistem')) return 'settings-outline';
-  if (n.includes('mat') || n.includes('álgebra') || n.includes('algebra') || n.includes('cálculo')) return 'calculator-outline';
-  if (n.includes('lengua') || n.includes('liter') || n.includes('español') || n.includes('lectura')) return 'book-outline';
-  if (n.includes('ciencia') || n.includes('biolog') || n.includes('quím') || n.includes('física')) return 'flask-outline';
-  if (n.includes('social') || n.includes('histor') || n.includes('geograf')) return 'earth-outline';
-  if (n.includes('arte') || n.includes('música') || n.includes('dibujo')) return 'color-palette-outline';
-  if (n.includes('educa') || n.includes('deport')) return 'fitness-outline';
-  if (n.includes('inglés') || n.includes('ingles') || n.includes('idioma')) return 'language-outline';
-  if (n.includes('ética') || n.includes('etica') || n.includes('religion') || n.includes('religión')) return 'heart-outline';
+  // Tecnología / Informática / Sistemas → computador
+  if (n.includes('tecnolog') || n.includes('inform') || n.includes('sistem')) return 'laptop-outline';
+  // Matemáticas / Álgebra / Cálculo → símbolo infinito (∞)
+  if (n.includes('mat') || n.includes('álgebra') || n.includes('algebra') || n.includes('cálculo') || n.includes('calculo')) return 'infinite-outline';
+  // Lengua / Literatura / Español / Lectura
+  if (n.includes('lengua') || n.includes('liter') || n.includes('español') || n.includes('lectura') || n.includes('castella')) return 'book-outline';
+  // Artística / Arte / Dibujo / Plástica → pincel
+  if (n.includes('artíst') || n.includes('artist') || n.includes('arte') || n.includes('dibujo') || n.includes('plást') || n.includes('plast')) return 'brush-outline';
+  // Música
+  if (n.includes('música') || n.includes('musica')) return 'musical-notes-outline';
+  // Ciencias Sociales / Historia / Geografía / Democracia → megáfono
+  if (n.includes('social') || n.includes('histor') || n.includes('geograf') || n.includes('civica') || n.includes('cívica')) return 'megaphone-outline';
+  // Educación Física / Deportes → figura caminando (la más cercana a "corriendo")
+  if (n.includes('educa') || n.includes('deport')) return 'walk-outline';
+  // Ciencias Naturales / Biología / Química / Física (ciencia)
+  if (n.includes('ciencia') || n.includes('biolog') || n.includes('quím') || n.includes('quim') || n.includes('físic') || n.includes('fisic')) return 'flask-outline';
+  // Inglés / Idiomas / Francés
+  if (n.includes('inglés') || n.includes('ingles') || n.includes('idioma') || n.includes('frances') || n.includes('francés')) return 'language-outline';
+  // Ética / Convivencia → personas conviviendo
+  if (n.includes('ética') || n.includes('etica') || n.includes('conviv') || n.includes('moral')) return 'people-outline';
+  // Religión / Fe → manos (lo más cercano a manos orando en Ionicons)
+  if (n.includes('religion') || n.includes('religión') || n.includes('relig')) return 'hand-right-outline';
   return 'school-outline';
 }
 
