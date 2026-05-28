@@ -1,17 +1,9 @@
-/**
- * AsistenciaScreen — diseño bold/impactante
- *
- * Estados: 🟢 PRESENTE  🔴 AUSENTE  🟡 JUSTIFICADA  🔵 INJUSTIFICADA
- * Params:  asignacionId, materiaNombre, periodoNumero
- */
-
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity,
-  StyleSheet, ActivityIndicator, Alert, Platform, StatusBar,
+  View, Text, ScrollView, TouchableOpacity,
+  StyleSheet, ActivityIndicator, Alert, Platform,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -31,10 +23,10 @@ const API_URL = 'https://notafacil-backend-539h.onrender.com';
 const ESTADOS: EstadoAsistencia[] = ['PRESENTE', 'AUSENTE', 'JUSTIFICADA', 'INJUSTIFICADA'];
 
 const ESTADO_CONFIG: Record<EstadoAsistencia, { label: string; bg: string }> = {
-  PRESENTE:      { label: 'P', bg: '#059669' },
-  AUSENTE:       { label: 'A', bg: '#DC2626' },
-  JUSTIFICADA:   { label: 'J', bg: '#D97706' },
-  INJUSTIFICADA: { label: 'I', bg: '#2563EB' },
+  PRESENTE:      { label: 'P', bg: '#10b981' },
+  AUSENTE:       { label: 'A', bg: '#ef4444' },
+  JUSTIFICADA:   { label: 'J', bg: '#f59e0b' },
+  INJUSTIFICADA: { label: 'I', bg: '#3b82f6' },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -209,8 +201,7 @@ export default function AsistenciaScreen() {
   if (loadingEstudiantes) {
     return (
       <View style={styles.loadingWrap}>
-        <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
-        <ActivityIndicator size="large" color="#2563EB" />
+        <ActivityIndicator size="large" color="#1a3a6b" />
         <Text style={styles.loadingText}>Cargando estudiantes...</Text>
       </View>
     );
@@ -220,119 +211,105 @@ export default function AsistenciaScreen() {
 
   return (
     <View style={styles.flex}>
-      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
 
-      {/* ── Header personalizado ── */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerMateria} numberOfLines={1}>{materiaNombre}</Text>
-          <Text style={styles.headerSub}>Control de Asistencia</Text>
-        </View>
-        <View style={styles.periodoBadge}>
-          <Text style={styles.periodoText}>P{periodoNumero}</Text>
+      {/* ── Barra de contexto (materia + periodo) ── */}
+      <View style={styles.headerBar}>
+        <Text style={styles.headerTitle} numberOfLines={1}>{materiaNombre}</Text>
+        <View style={styles.periodoPill}>
+          <Text style={styles.periodoText}>Periodo {periodoNumero}</Text>
         </View>
       </View>
 
       {/* ── Selector de fecha ── */}
       <View style={styles.fechaRow}>
-        <TouchableOpacity style={styles.fechaBtn} onPress={() => cambiarFecha(-1)}>
-          <Ionicons name="chevron-back" size={22} color="#0F172A" />
+        <TouchableOpacity onPress={() => cambiarFecha(-1)} style={styles.fechaNavBtn}>
+          <Text style={styles.fechaNavChar}>‹</Text>
         </TouchableOpacity>
         <View style={styles.fechaCentro}>
           <Text style={styles.fechaTexto}>{formatFecha(fechaISO)}</Text>
-          {yaGuardado && <Text style={styles.guardadoBadge}>✓ Guardada</Text>}
+          {yaGuardado && <Text style={styles.guardadoTexto}>✓ Asistencia guardada</Text>}
         </View>
-        <TouchableOpacity style={styles.fechaBtn} onPress={() => cambiarFecha(1)}>
-          <Ionicons name="chevron-forward" size={22} color="#0F172A" />
+        <TouchableOpacity onPress={() => cambiarFecha(1)} style={styles.fechaNavBtn}>
+          <Text style={styles.fechaNavChar}>›</Text>
         </TouchableOpacity>
       </View>
 
-      {/* ── Tarjetas de estadísticas ── */}
-      <View style={styles.statRow}>
+      {/* ── Resumen de conteos ── */}
+      <View style={styles.resumenRow}>
         {ESTADOS.map((estado) => (
-          <TouchableOpacity
+          <View
             key={estado}
-            style={[styles.statCard, { backgroundColor: ESTADO_CONFIG[estado].bg }]}
-            onPress={() => marcarTodos(estado)}
-            activeOpacity={0.8}
+            style={[styles.resumenItem, { backgroundColor: ESTADO_CONFIG[estado].bg + '22' }]}
           >
-            <Text style={styles.statNum}>{conteos[estado]}</Text>
-            <Text style={styles.statLabel}>{ESTADO_CONFIG[estado].label}</Text>
-          </TouchableOpacity>
+            <Text style={[styles.resumenNum, { color: ESTADO_CONFIG[estado].bg }]}>
+              {conteos[estado]}
+            </Text>
+            <Text style={[styles.resumenLabel, { color: ESTADO_CONFIG[estado].bg }]}>
+              {ESTADO_CONFIG[estado].label}
+            </Text>
+          </View>
         ))}
       </View>
 
       {/* ── Marcar todos ── */}
-      <View style={styles.marcarRow}>
-        <Text style={styles.marcarLabel}>Marcar todos</Text>
-        <View style={styles.marcarBtns}>
-          {ESTADOS.map((estado) => (
-            <TouchableOpacity
-              key={estado}
-              style={[styles.marcarBtn, { backgroundColor: ESTADO_CONFIG[estado].bg }]}
-              onPress={() => marcarTodos(estado)}
-            >
-              <Text style={styles.marcarBtnText}>{ESTADO_CONFIG[estado].label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+      <View style={styles.marcarTodosRow}>
+        <Text style={styles.marcarTodosLabel}>Marcar todos:</Text>
+        {ESTADOS.map((estado) => (
+          <TouchableOpacity
+            key={estado}
+            style={[styles.marcarBtn, { backgroundColor: ESTADO_CONFIG[estado].bg }]}
+            onPress={() => marcarTodos(estado)}
+          >
+            <Text style={styles.marcarBtnText}>{ESTADO_CONFIG[estado].label}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       {/* ── Lista de estudiantes ── */}
       {loadingAsistencia ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="small" color="#0F172A" />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="small" color="#1a3a6b" />
         </View>
       ) : (
-        <FlatList
-          data={estudiantes}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listaPadding}
-          renderItem={({ item: est, index: idx }) => {
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.listaContenido}>
+          {estudiantes.map((est, idx) => {
             const estado = registros[est.id] || 'PRESENTE';
             const config = ESTADO_CONFIG[estado];
             return (
               <TouchableOpacity
+                key={est.id}
                 style={styles.estudianteRow}
                 onPress={() => toggleEstado(est.id)}
-                activeOpacity={0.75}
+                activeOpacity={0.7}
               >
-                <View style={styles.numCircle}>
-                  <Text style={styles.numText}>{idx + 1}</Text>
-                </View>
-                <View style={styles.estudianteInfo}>
-                  <Text style={styles.estudianteNombre}>
-                    {(est.apellido + ' ' + est.nombre).toUpperCase()}
-                  </Text>
-                  <Text style={styles.estudianteDoc}>{est.numeroDocumento}</Text>
+                <Text style={styles.numTexto}>{idx + 1}.</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.nombreTexto}>{est.apellido} {est.nombre}</Text>
+                  <Text style={styles.docTexto}>{est.numeroDocumento}</Text>
                 </View>
                 <View style={[styles.estadoBtn, { backgroundColor: config.bg }]}>
                   <Text style={styles.estadoBtnText}>{config.label}</Text>
                 </View>
               </TouchableOpacity>
             );
-          }}
-          ListFooterComponent={<View style={{ height: 100 }} />}
-        />
+          })}
+          <View style={{ height: 90 }} />
+        </ScrollView>
       )}
 
       {/* ── Botón guardar ── */}
-      <View style={styles.footerBar}>
+      <View style={styles.footerWrap}>
         <TouchableOpacity
-          style={[styles.guardarBtn, saving && styles.guardarBtnDisabled]}
+          style={[styles.guardarBtn, saving && { opacity: 0.6 }]}
           onPress={guardar}
           disabled={saving}
         >
-          {saving ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.guardarBtnText}>
-              {yaGuardado ? '↺  Actualizar Asistencia' : '✓  Guardar Asistencia'}
-            </Text>
-          )}
+          {saving
+            ? <ActivityIndicator size="small" color="#fff" />
+            : <Text style={styles.guardarBtnText}>
+                {yaGuardado ? '↺  Actualizar Asistencia' : '✓  Guardar Asistencia'}
+              </Text>
+          }
         </TouchableOpacity>
       </View>
     </View>
@@ -341,110 +318,121 @@ export default function AsistenciaScreen() {
 
 // ─── Estilos ──────────────────────────────────────────────────────────────────
 
-const HEADER_PT = Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 8 : 52;
-
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#F1F5F9' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0F172A' },
-  loadingText: { marginTop: 12, color: '#94A3B8', fontSize: 15 },
+  flex: { flex: 1, backgroundColor: '#f3f4f6' },
+  loadingWrap: {
+    flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6',
+  },
+  loadingText: { marginTop: 12, color: '#6b7280', fontSize: 15 },
 
-  // ── Header ──
-  header: {
-    backgroundColor: '#0F172A',
-    paddingTop: HEADER_PT,
-    paddingBottom: 14,
+  // ── Barra de contexto ──
+  headerBar: {
+    backgroundColor: '#1a3a6b',
+    paddingVertical: 10,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    justifyContent: 'space-between',
   },
-  backBtn: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    justifyContent: 'center', alignItems: 'center',
+  headerTitle: {
+    color: '#ffffff', fontSize: 15, fontWeight: '700', flex: 1, marginRight: 10,
   },
-  headerContent: { flex: 1 },
-  headerMateria: { color: '#FFFFFF', fontWeight: '800', fontSize: 17, letterSpacing: -0.3 },
-  headerSub: { color: 'rgba(255,255,255,0.45)', fontSize: 12, marginTop: 1, fontWeight: '500' },
-  periodoBadge: {
-    backgroundColor: '#2563EB', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6,
+  periodoPill: {
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    paddingHorizontal: 10, paddingVertical: 3,
+    borderRadius: 10,
   },
-  periodoText: { color: '#fff', fontWeight: '700', fontSize: 12 },
+  periodoText: { color: '#ffffff', fontSize: 12, fontWeight: '600' },
 
   // ── Selector de fecha ──
   fechaRow: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#fff', paddingVertical: 12, paddingHorizontal: 8,
-    borderBottomWidth: 1, borderBottomColor: '#E2E8F0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
   },
-  fechaBtn: { padding: 8 },
-  fechaCentro: { flex: 1, alignItems: 'center' },
-  fechaTexto: { fontSize: 15, fontWeight: '700', color: '#0F172A', textTransform: 'capitalize' },
-  guardadoBadge: { fontSize: 11, color: '#059669', fontWeight: '700', marginTop: 2 },
+  fechaNavBtn: { paddingHorizontal: 16, paddingVertical: 10 },
+  fechaNavChar: { fontSize: 28, color: '#374151', lineHeight: 32 },
+  fechaCentro: { flex: 1, alignItems: 'center', paddingVertical: 8 },
+  fechaTexto: {
+    fontSize: 14, fontWeight: '600', color: '#111827',
+    textTransform: 'capitalize', textAlign: 'center',
+  },
+  guardadoTexto: {
+    fontSize: 11, color: '#10b981', fontWeight: '600', marginTop: 2, textAlign: 'center',
+  },
 
-  // ── Stat cards ──
-  statRow: {
-    flexDirection: 'row', paddingHorizontal: 12, paddingVertical: 10, gap: 8,
-    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E2E8F0',
+  // ── Resumen ──
+  resumenRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 10, paddingVertical: 8,
+    gap: 8,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1, borderBottomColor: '#e5e7eb',
   },
-  statCard: { flex: 1, borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
-  statNum: { color: '#fff', fontSize: 30, fontWeight: '900', lineHeight: 34 },
-  statLabel: { color: 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: '800', marginTop: 2, letterSpacing: 0.5 },
+  resumenItem: {
+    flex: 1, borderRadius: 8, paddingVertical: 6, alignItems: 'center',
+  },
+  resumenNum: { fontSize: 20, fontWeight: '700' },
+  resumenLabel: { fontSize: 11, fontWeight: '700', marginTop: 1 },
 
   // ── Marcar todos ──
-  marcarRow: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 14, paddingVertical: 10,
-    backgroundColor: '#F8FAFC', borderBottomWidth: 1, borderBottomColor: '#E2E8F0',
+  marcarTodosRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12, paddingVertical: 8,
+    backgroundColor: '#f9fafb',
+    borderBottomWidth: 1, borderBottomColor: '#e5e7eb',
+    gap: 8,
   },
-  marcarLabel: { fontSize: 12, color: '#64748B', fontWeight: '600', flex: 1 },
-  marcarBtns: { flexDirection: 'row', gap: 8 },
+  marcarTodosLabel: { fontSize: 12, color: '#6b7280', fontWeight: '600' },
   marcarBtn: {
-    width: 36, height: 36, borderRadius: 18,
-    alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 14, paddingVertical: 6, borderRadius: 6,
   },
-  marcarBtnText: { color: '#fff', fontWeight: '900', fontSize: 14 },
+  marcarBtnText: { color: '#ffffff', fontWeight: '700', fontSize: 12 },
 
   // ── Lista ──
-  listaPadding: { paddingHorizontal: 12, paddingTop: 10 },
-
+  listaContenido: { paddingHorizontal: 10, paddingTop: 8 },
   estudianteRow: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#fff', borderRadius: 12, padding: 12,
-    marginBottom: 8, elevation: 2,
-    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07, shadowRadius: 4,
-    borderWidth: 1, borderColor: '#E8EEF4',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    paddingHorizontal: 12, paddingVertical: 10,
+    marginBottom: 6,
+    elevation: 1,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
-  numCircle: {
-    width: 28, height: 28, borderRadius: 14,
-    backgroundColor: '#F1F5F9',
-    justifyContent: 'center', alignItems: 'center',
+  numTexto: {
+    width: 26, fontSize: 13, color: '#9ca3af', fontWeight: '500', marginRight: 6,
   },
-  numText: { fontSize: 12, color: '#64748B', fontWeight: '700' },
-  estudianteInfo: { flex: 1, marginLeft: 10 },
-  estudianteNombre: { fontSize: 13, fontWeight: '700', color: '#0F172A', letterSpacing: 0.2 },
-  estudianteDoc: { fontSize: 11, color: '#94A3B8', marginTop: 1 },
+  nombreTexto: { fontSize: 13, fontWeight: '600', color: '#111827' },
+  docTexto: { fontSize: 11, color: '#9ca3af', marginTop: 1 },
 
   // ── Botón de estado ──
   estadoBtn: {
-    width: 46, height: 46, borderRadius: 23,
+    width: 40, height: 40, borderRadius: 20,
     alignItems: 'center', justifyContent: 'center',
   },
-  estadoBtnText: { color: '#fff', fontWeight: '900', fontSize: 18 },
+  estadoBtnText: { color: '#ffffff', fontWeight: '700', fontSize: 16 },
 
   // ── Footer ──
-  footerBar: {
+  footerWrap: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: '#fff', padding: 12,
-    borderTopWidth: 1, borderTopColor: '#E2E8F0',
+    backgroundColor: '#ffffff',
+    padding: 12,
     paddingBottom: Platform.OS === 'ios' ? 30 : 12,
+    borderTopWidth: 1, borderTopColor: '#e5e7eb',
   },
   guardarBtn: {
-    backgroundColor: '#0F172A', borderRadius: 14,
-    paddingVertical: 16, alignItems: 'center',
+    backgroundColor: '#1a3a6b',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
   },
-  guardarBtnDisabled: { opacity: 0.5 },
-  guardarBtnText: { color: '#fff', fontWeight: '800', fontSize: 16, letterSpacing: 0.2 },
+  guardarBtnText: { color: '#ffffff', fontWeight: '700', fontSize: 16 },
 });
