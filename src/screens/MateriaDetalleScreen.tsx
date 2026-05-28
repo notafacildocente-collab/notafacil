@@ -26,7 +26,7 @@ const ACCIONES = [
   {
     id: 'calificar',
     icono: 'create-outline' as keyof typeof Ionicons.glyphMap,
-    titulo: 'Calificar',
+    titulo: 'Calificar por Desempeños',
     descripcion: 'Registrar y editar notas por desempeño',
     color: '#2563EB',
     bg: '#EFF6FF',
@@ -35,7 +35,7 @@ const ACCIONES = [
   {
     id: 'asistencia',
     icono: 'calendar-outline' as keyof typeof Ionicons.glyphMap,
-    titulo: 'Asistencia',
+    titulo: 'Control de Asistencia',
     descripcion: 'Registrar presencia, fallas y tardanzas',
     color: '#0EA5E9',
     bg: '#F0F9FF',
@@ -44,7 +44,7 @@ const ACCIONES = [
   {
     id: 'planilla',
     icono: 'grid-outline' as keyof typeof Ionicons.glyphMap,
-    titulo: 'Planilla de notas',
+    titulo: 'Malla por Grupos',
     descripcion: 'Ver tabla completa de notas y exportar PDF',
     color: '#475569',
     bg: '#F8FAFC',
