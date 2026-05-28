@@ -310,6 +310,19 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
                   <Ionicons name="chevron-forward" size={18} color="#DC2626" />
                 </TouchableOpacity>
               )}
+              {materias.length > 0 && (
+                <TouchableOpacity
+                  style={styles.botonCarnet}
+                  onPress={() => navigation.navigate('CarnetEstudiantes', {
+                    asignacionId: materias[0].asignacionId,
+                    cursoNombre: materias[0].codigo || '',
+                  })}
+                >
+                  <Ionicons name="id-card-outline" size={20} color="#7C3AED" />
+                  <Text style={styles.botonCarnetTexto}>Carnets de Estudiantes</Text>
+                  <Ionicons name="chevron-forward" size={18} color="#7C3AED" />
+                </TouchableOpacity>
+              )}
             </View>
           )}
           renderItem={({ item }) => (
@@ -444,4 +457,12 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#FECACA',
   },
   botonRetirosTexto: { color: '#DC2626', fontWeight: '700', fontSize: 15, flex: 1 },
+
+  botonCarnet: {
+    backgroundColor: '#F5F3FF', borderRadius: 14,
+    paddingVertical: 16, paddingHorizontal: 20,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    borderWidth: 1, borderColor: '#DDD6FE',
+  },
+  botonCarnetTexto: { color: '#7C3AED', fontWeight: '700', fontSize: 15, flex: 1 },
 });
