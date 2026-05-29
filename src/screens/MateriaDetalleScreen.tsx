@@ -59,21 +59,14 @@ export default function MateriaDetalleScreen() {
 
   const icono = iconoMateria(materiaNombre || '');
 
-  // ── Animación VIP ──
-  const pulseAnim  = useRef(new Animated.Value(1)).current;
-  const glowOpacity = useRef(new Animated.Value(0.15)).current;
+  // ── Animación pulso suave ──
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, { toValue: 1.025, duration: 850, useNativeDriver: true }),
         Animated.timing(pulseAnim, { toValue: 1, duration: 850, useNativeDriver: true }),
-      ]),
-    ).start();
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowOpacity, { toValue: 0.35, duration: 1100, useNativeDriver: false }),
-        Animated.timing(glowOpacity, { toValue: 0.15, duration: 1100, useNativeDriver: false }),
       ]),
     ).start();
   }, []);
@@ -120,40 +113,25 @@ export default function MateriaDetalleScreen() {
           </TouchableOpacity>
         ))}
 
-        {/* ── EVALUAR CON IA — VIP ── */}
-        <Text style={[styles.seccionLabel, { marginTop: 20, color: '#7C3AED' }]}>⭐ INTELIGENCIA ARTIFICIAL</Text>
+        {/* ── EVALUAR CON IA ── */}
         <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
           <TouchableOpacity
-            style={styles.iaVipCard}
-            activeOpacity={0.85}
+            style={styles.accionCard}
+            activeOpacity={0.75}
             onPress={() => (navigation as any).navigate('SeleccionarPeriodo', {
               materiaId,
               materiaNombre,
               modo: 'calificarIA',
             })}
           >
-            {/* Glow animado */}
-            <Animated.View style={[styles.iaVipGlow, { opacity: glowOpacity }]} />
-
-            {/* Badge VIP */}
-            <View style={styles.iaVipBadge}>
-              <Text style={styles.iaVipBadgeTxt}>✦ VIP</Text>
+            <View style={[styles.accionIconoWrap, { backgroundColor: '#F5F3FF' }]}>
+              <Ionicons name="sparkles" size={24} color="#7C3AED" />
             </View>
-
-            {/* Ícono */}
-            <View style={styles.iaVipIconWrap}>
-              <Ionicons name="sparkles" size={30} color="#FCD34D" />
+            <View style={styles.accionTextos}>
+              <Text style={styles.accionTitulo}>Evaluar con IA</Text>
+              <Text style={styles.accionDesc}>Fotografía el examen y la IA califica automáticamente</Text>
             </View>
-
-            {/* Textos */}
-            <View style={{ flex: 1 }}>
-              <Text style={styles.iaVipTitulo}>Evaluar con IA</Text>
-              <Text style={styles.iaVipDesc}>
-                Fotografía el examen · la IA califica{'\n'}y genera el razonamiento automáticamente
-              </Text>
-            </View>
-
-            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.6)" />
+            <Ionicons name="chevron-forward" size={18} color="#CBD5E1" />
           </TouchableOpacity>
         </Animated.View>
 
@@ -230,42 +208,4 @@ const styles = StyleSheet.create({
   accionTitulo: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
   accionDesc: { fontSize: 12, color: '#475569', marginTop: 3, lineHeight: 17 },
 
-  // ── Botón VIP Evaluar con IA ──
-  iaVipCard: {
-    borderRadius: 18,
-    padding: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    marginBottom: 10,
-    overflow: 'hidden',
-    backgroundColor: '#5B21B6',
-    borderWidth: 1.5,
-    borderColor: '#7C3AED',
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.55,
-    shadowRadius: 14,
-    elevation: 10,
-  },
-  iaVipGlow: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: '#A78BFA',
-    borderRadius: 18,
-  },
-  iaVipBadge: {
-    position: 'absolute', top: 10, right: 12,
-    backgroundColor: '#F59E0B',
-    paddingHorizontal: 9, paddingVertical: 3,
-    borderRadius: 10,
-  },
-  iaVipBadgeTxt: { color: '#FFFFFF', fontWeight: '900', fontSize: 10, letterSpacing: 0.8 },
-  iaVipIconWrap: {
-    width: 58, height: 58, borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  iaVipTitulo: { fontSize: 17, fontWeight: '800', color: '#FFFFFF', marginBottom: 5 },
-  iaVipDesc: { fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 17 },
 });
