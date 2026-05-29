@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, ActivityIndicator, Alert, Image, StatusBar,
+  Modal, TextInput, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -36,6 +37,10 @@ export default function RectorScreen({ navigation }: any) {
   const [accionando, setAccionando] = useState(false);
   const [logoActual, setLogoActual] = useState<string | null>(null);
   const [logoLoading, setLogoLoading] = useState(false);
+  const [modalFechas, setModalFechas] = useState<{
+    id: string; numero: number; inicio: string; fin: string;
+  } | null>(null);
+  const [guardandoFechas, setGuardandoFechas] = useState(false);
 
   const cerrarSesion = () => {
     Alert.alert('Cerrar sesión', '¿Está seguro que desea salir?', [
@@ -51,6 +56,8 @@ export default function RectorScreen({ navigation }: any) {
   const cargarDatos = async () => {
     try {
       setLoading(true);
+      // Asegurar que existan los 4 períodos del año
+      await apiFetch('/api/rector/periodos/inicializar', { method: 'POST' });
       const [resPeriodos, resProfesores, resResumen, resLogo] = await Promise.all([
         apiFetch('/api/rector/periodos'),
         apiFetch('/api/rector/profesores'),
@@ -71,6 +78,47 @@ export default function RectorScreen({ navigation }: any) {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEditarFechas = (periodo: Periodo) => {
+    setModalFechas({
+      id: periodo.id,
+      numero: periodo.numero,
+      inicio: periodo.fechaInicio?.slice(0, 10) || '',
+      fin:    periodo.fechaFin?.slice(0, 10)    || '',
+    });
+  };
+
+  const handleGuardarFechas = async () => {
+    if (!modalFechas) return;
+    const { id, inicio, fin } = modalFechas;
+    if (!inicio || !fin || !/^\d{4}-\d{2}-\d{2}$/.test(inicio) || !/^\d{4}-\d{2}-\d{2}$/.test(fin)) {
+      Alert.alert('Formato incorrecto', 'Usa el formato AAAA-MM-DD\nEjemplo: 2026-02-01');
+      return;
+    }
+    if (new Date(fin) <= new Date(inicio)) {
+      Alert.alert('Fechas inválidas', 'La fecha de cierre debe ser posterior a la de inicio.');
+      return;
+    }
+    try {
+      setGuardandoFechas(true);
+      const res = await apiFetch(`/api/rector/periodos/${id}/fechas`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fechaInicio: inicio, fechaFin: fin }),
+      });
+      if (res.ok) {
+        setModalFechas(null);
+        Alert.alert('✓ Guardado', 'Las fechas del período fueron actualizadas.\nCuando llegue la fecha de cierre el período se cerrará automáticamente.');
+        cargarDatos();
+      } else {
+        Alert.alert('Error', 'No se pudieron guardar las fechas.');
+      }
+    } catch {
+      Alert.alert('Error', 'No se pudo conectar al servidor.');
+    } finally {
+      setGuardandoFechas(false);
     }
   };
 
@@ -240,7 +288,7 @@ export default function RectorScreen({ navigation }: any) {
         {periodos.map((periodo) => (
           <View key={periodo.id} style={styles.card}>
             <View style={styles.periodoTop}>
-              <View>
+              <View style={{ flex: 1 }}>
                 <Text style={styles.periodoNombre}>Período {periodo.numero}</Text>
                 <Text style={styles.periodoFechas}>
                   {periodo.fechaInicio?.slice(0, 10)} → {periodo.fechaFin?.slice(0, 10)}
@@ -251,25 +299,89 @@ export default function RectorScreen({ navigation }: any) {
               </View>
             </View>
 
-            {periodo.cerrado ? (
+            <View style={styles.periodoBtns}>
+              {periodo.cerrado ? (
+                <TouchableOpacity
+                  style={[styles.periodoBtn, styles.periodoBtnAbrir]}
+                  onPress={() => handleAbrirPeriodo(periodo)}
+                  disabled={accionando}
+                >
+                  <Text style={styles.periodoBtnText}>Abrir</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.periodoBtn, styles.periodoBtnCerrar]}
+                  onPress={() => handleCerrarPeriodo(periodo)}
+                  disabled={accionando}
+                >
+                  <Text style={styles.periodoBtnText}>Cerrar</Text>
+                </TouchableOpacity>
+              )}
               <TouchableOpacity
-                style={[styles.periodoBtn, styles.periodoBtnAbrir]}
-                onPress={() => handleAbrirPeriodo(periodo)}
+                style={[styles.periodoBtn, styles.periodoBtnFechas]}
+                onPress={() => handleEditarFechas(periodo)}
                 disabled={accionando}
               >
-                <Text style={styles.periodoBtnText}>Abrir Período</Text>
+                <Ionicons name="calendar-outline" size={14} color="#1E3A5F" />
+                <Text style={[styles.periodoBtnText, { color: '#1E3A5F' }]}>Fechas</Text>
               </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={[styles.periodoBtn, styles.periodoBtnCerrar]}
-                onPress={() => handleCerrarPeriodo(periodo)}
-                disabled={accionando}
-              >
-                <Text style={styles.periodoBtnText}>Cerrar Período</Text>
-              </TouchableOpacity>
-            )}
+            </View>
           </View>
         ))}
+
+        {/* ── Modal editar fechas ── */}
+        <Modal
+          visible={!!modalFechas}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setModalFechas(null)}
+        >
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalOverlay}
+          >
+            <View style={styles.modalBox}>
+              <Text style={styles.modalTitulo}>Período {modalFechas?.numero} — Fechas</Text>
+              <Text style={styles.modalHint}>Formato: AAAA-MM-DD · Ej: 2026-02-01</Text>
+              <Text style={styles.modalHint}>Al llegar la fecha de cierre el período se cerrará automáticamente.</Text>
+
+              <Text style={styles.modalLabel}>Fecha de inicio</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={modalFechas?.inicio || ''}
+                onChangeText={(t) => setModalFechas((p) => p ? { ...p, inicio: t } : p)}
+                placeholder="2026-01-27"
+                keyboardType="numeric"
+                maxLength={10}
+              />
+
+              <Text style={styles.modalLabel}>Fecha de cierre</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={modalFechas?.fin || ''}
+                onChangeText={(t) => setModalFechas((p) => p ? { ...p, fin: t } : p)}
+                placeholder="2026-03-28"
+                keyboardType="numeric"
+                maxLength={10}
+              />
+
+              <View style={styles.modalBtns}>
+                <TouchableOpacity style={styles.modalBtnCancelar} onPress={() => setModalFechas(null)}>
+                  <Text style={styles.modalBtnCancelarTxt}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalBtnGuardar, guardandoFechas && { opacity: 0.6 }]}
+                  onPress={handleGuardarFechas}
+                  disabled={guardandoFechas}
+                >
+                  {guardandoFechas
+                    ? <ActivityIndicator size="small" color="#fff" />
+                    : <Text style={styles.modalBtnGuardarTxt}>Guardar</Text>}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
 
         {/* ── Directorio de Docentes ────────────────────────────────────────── */}
         <Text style={styles.seccionTitulo}>Directorio de Docentes</Text>
@@ -377,12 +489,28 @@ const styles = StyleSheet.create({
   badgeAbierto: { backgroundColor: '#22C55E' },
   badgeCerrado: { backgroundColor: '#EF4444' },
   badgeText: { color: '#FFFFFF', fontWeight: '700', fontSize: 12 },
+  periodoBtns: { flexDirection: 'row', gap: 8, marginTop: 10 },
   periodoBtn: {
-    borderRadius: 10, paddingVertical: 12, alignItems: 'center',
+    flex: 1, borderRadius: 10, paddingVertical: 10,
+    alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 5,
   },
-  periodoBtnAbrir: { backgroundColor: '#16A34A' },
+  periodoBtnAbrir:  { backgroundColor: '#16A34A' },
   periodoBtnCerrar: { backgroundColor: '#DC2626' },
-  periodoBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
+  periodoBtnFechas: { backgroundColor: '#E2E8F0' },
+  periodoBtnText:   { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
+
+  // ── Modal fechas ──
+  modalOverlay:   { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  modalBox:       { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 22, width: '100%', maxWidth: 400 },
+  modalTitulo:    { fontSize: 18, fontWeight: '800', color: '#1E3A5F', marginBottom: 4 },
+  modalHint:      { fontSize: 11, color: '#64748B', marginBottom: 10, lineHeight: 16 },
+  modalLabel:     { fontSize: 12, fontWeight: '700', color: '#475569', marginBottom: 4, marginTop: 8 },
+  modalInput:     { borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 8, padding: 10, fontSize: 16, color: '#0F172A', backgroundColor: '#F8FAFC', letterSpacing: 1 },
+  modalBtns:      { flexDirection: 'row', gap: 10, marginTop: 20 },
+  modalBtnCancelar:    { flex: 1, borderRadius: 10, paddingVertical: 12, alignItems: 'center', backgroundColor: '#F1F5F9', borderWidth: 1, borderColor: '#E2E8F0' },
+  modalBtnCancelarTxt: { color: '#475569', fontWeight: '700', fontSize: 14 },
+  modalBtnGuardar:     { flex: 1, borderRadius: 10, paddingVertical: 12, alignItems: 'center', backgroundColor: '#1E3A5F' },
+  modalBtnGuardarTxt:  { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
 
   // ── Profesor ──────────────────────────────────────────────────────────────
   profesorCard: { flexDirection: 'row', alignItems: 'center', gap: 12 },
