@@ -304,9 +304,10 @@ export default function ListadoEstudiantesScreen() {
     try {
       setGenerandoPlanilla(true);
 
-      // Siempre 3 desempeños fijos (D1, D2, D3) — 3 casillas en blanco c/u = 9 total
+      // Siempre 3 desempeños fijos (D1, D2, D3) — 2 casillas en blanco c/u = 6 total
+      // (2 cols para dejar espacio a los nombres completos)
       const NUM_D   = 3;
-      const NUM_COL = 3;
+      const NUM_COL = 2;
 
       const fechaCorta = new Date().toLocaleDateString('es-CO');
       const fechaLarga = new Date().toLocaleDateString('es-CO', {
@@ -366,8 +367,8 @@ export default function ListadoEstudiantesScreen() {
   .metaValor { font-size: 10px; font-weight: 700; color: #1a3a6b; margin-top: 2px; min-height: 14px; border-bottom: 1.5px solid #94a3b8; }
 
   /* ── Tabla ── */
-  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-  th, td { border: 1px solid #aaa; text-align: center; vertical-align: middle; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; table-layout: auto; }
+  th, td { border: 1px solid #aaa; text-align: center; vertical-align: middle; }
 
   /* D1 D2 D3 */
   .dHead { background: #1a3a6b; color: #fff; font-size: 12px; font-weight: 900; padding: 5px 2px; }
@@ -378,9 +379,9 @@ export default function ListadoEstudiantesScreen() {
   /* # */
   th.thNum, td.num { width: 20px; font-size: 8px; color: #888; background: #f8fafc; }
 
-  /* Nombre — ancho y letra grande */
-  th.thNombre { background: #1a3a6b; color: #fff; font-size: 10px; font-weight: 700; text-align: left; padding-left: 6px; }
-  td.nombre { text-align: left; padding: 1px 6px; font-weight: 700; font-size: 11px; white-space: nowrap; overflow: hidden; }
+  /* Nombre — ancho y letra grande, nunca se recorta */
+  th.thNombre { background: #1a3a6b; color: #fff; font-size: 10px; font-weight: 700; text-align: left; padding-left: 6px; min-width: 160px; }
+  td.nombre { text-align: left; padding: 2px 6px; font-weight: 700; font-size: 11px; white-space: normal; word-break: break-word; min-width: 160px; line-height: 1.25; }
 
   /* Celdas de notas en blanco */
   td.cBlank { height: 20px; background: #fff; }
@@ -414,7 +415,7 @@ export default function ListadoEstudiantesScreen() {
 
   <!-- Meta: etiquetas fijas, valores en blanco para que la docente llene -->
   <div class="meta">
-    <div class="metaItem"><div class="metaLabel">Materia</div><div class="metaValor">${materiaNombre || ''}</div></div>
+    <div class="metaItem"><div class="metaLabel">Materia</div><div class="metaValor">&nbsp;</div></div>
     <div class="metaItem"><div class="metaLabel">Período</div><div class="metaValor">&nbsp;</div></div>
     <div class="metaItem"><div class="metaLabel">Estudiantes</div><div class="metaValor">${estudiantes.length}</div></div>
     <div class="metaItem"><div class="metaLabel">Desempeño</div><div class="metaValor">&nbsp;</div></div>
