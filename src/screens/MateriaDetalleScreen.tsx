@@ -128,8 +128,8 @@ export default function MateriaDetalleScreen() {
               <Ionicons name="sparkles" size={24} color="#7C3AED" />
             </View>
             <View style={styles.accionTextos}>
-              <Text style={styles.accionTitulo}>Evaluar con IA</Text>
-              <Text style={styles.accionDesc}>Fotografía el examen y la IA califica automáticamente</Text>
+              <Text style={styles.accionTitulo}>Evaluar con IA · Claude</Text>
+              <Text style={styles.accionDesc}>Impulsado por Claude — el modelo de razonamiento más avanzado del mundo. Califica, explica y aprende de cada examen.</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#CBD5E1" />
           </TouchableOpacity>
