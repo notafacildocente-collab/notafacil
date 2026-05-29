@@ -304,8 +304,7 @@ export default function ListadoEstudiantesScreen() {
     try {
       setGenerandoPlanilla(true);
 
-      // Siempre 3 desempeños fijos (D1, D2, D3) — 2 casillas en blanco c/u = 6 total
-      // (2 cols para dejar espacio a los nombres completos)
+      // 3 desempeños fijos, 2 casillas en blanco c/u = 6 columnas de nota
       const NUM_D   = 3;
       const NUM_COL = 2;
 
@@ -315,28 +314,42 @@ export default function ListadoEstudiantesScreen() {
       });
 
       const logoHtml = colegio.logoUrl
-        ? `<img src="${colegio.logoUrl}" style="height:60px;width:60px;object-fit:contain;" />`
-        : `<div style="width:60px;height:60px;background:#1a3a6b;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;color:white;font-weight:900;">${colegio.nombre.charAt(0)}</div>`;
+        ? `<img src="${colegio.logoUrl}" style="height:56px;width:56px;object-fit:contain;" />`
+        : `<div style="width:56px;height:56px;background:#1a3a6b;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;color:white;font-weight:900;">${colegio.nombre.charAt(0)}</div>`;
 
-      // D1, D2, D3 — cada uno span 3 columnas en blanco
+      // Encabezado: D1, D2, D3 — cada uno span 2
       const dHeaders = Array.from({ length: NUM_D }, (_, i) =>
         `<th colspan="${NUM_COL}" class="dHead">D${i + 1}</th>`,
       ).join('');
 
-      // Fila 2 del encabezado: 9 celdas azul claro en blanco (sin texto)
+      // Sub-encabezado: 6 celdas azul vacías (sin texto)
       const subHeaders = Array.from({ length: NUM_D * NUM_COL }, () =>
         `<th class="subH"></th>`,
       ).join('');
 
-      // Filas de estudiantes: nombre grande + 9 celdas vacías + 1 casilla F pequeña
+      // Fila especial de TEMAS — antes del primer estudiante, para que la docente
+      // escriba qué evalúa en cada casilla (queda en blanco color crema)
+      const celdasTema = Array.from({ length: NUM_D * NUM_COL }, () =>
+        `<td class="cTema"></td>`,
+      ).join('');
+      const filaTema = `
+        <tr class="temaRow">
+          <td class="num" style="font-size:7px;color:#b45309;font-weight:800;">✎</td>
+          <td class="temaLabel">TEMA / ACTIVIDAD</td>
+          ${celdasTema}
+          <td class="cF" style="background:#fef3c7;"></td>
+        </tr>`;
+
+      // Filas de estudiantes: nombre COMPLETO siempre, sin recorte
       const filas = estudiantes.map((est, idx) => {
+        const nombreCompleto = ((est.apellido || '') + ' ' + (est.nombre || '')).toUpperCase().trim();
         const celdas = Array.from({ length: NUM_D * NUM_COL }, () =>
           `<td class="cBlank"></td>`,
         ).join('');
         return `
           <tr class="${idx % 2 === 0 ? 'par' : 'impar'}">
             <td class="num">${idx + 1}</td>
-            <td class="nombre">${((est.apellido || '') + ' ' + (est.nombre || '')).toUpperCase().trim()}</td>
+            <td class="nombre">${nombreCompleto}</td>
             ${celdas}
             <td class="cF"></td>
           </tr>`;
@@ -348,55 +361,69 @@ export default function ListadoEstudiantesScreen() {
 <meta charset="UTF-8">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  @page { size: A4 landscape; margin: 12px 18px; }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 9px; color: #000; background: #fff; }
+  @page { size: A4 landscape; margin: 8px 12px; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 10px; color: #000; background: #fff; }
 
-  /* ── Encabezado ── */
-  .docHeader { display: flex; align-items: center; gap: 12px; border-bottom: 3px solid #1a3a6b; padding-bottom: 8px; margin-bottom: 7px; }
+  /* ── Encabezado doc ── */
+  .docHeader { display: flex; align-items: center; gap: 12px; border-bottom: 3px solid #1a3a6b; padding-bottom: 7px; margin-bottom: 6px; }
   .colegioInfo { flex: 1; }
-  .colegioNombre { font-size: 13px; font-weight: 900; color: #1a3a6b; text-transform: uppercase; }
+  .colegioNombre { font-size: 14px; font-weight: 900; color: #1a3a6b; text-transform: uppercase; }
   .colegioSub { font-size: 8px; color: #555; margin-top: 2px; }
-  .docTitulo { text-align: right; min-width: 130px; }
-  .docTitulo h2 { font-size: 11px; font-weight: 900; color: #1a3a6b; text-transform: uppercase; }
+  .docTitulo { text-align: right; min-width: 140px; }
+  .docTitulo h2 { font-size: 12px; font-weight: 900; color: #1a3a6b; text-transform: uppercase; }
   .docTitulo p  { font-size: 8px; color: #555; margin-top: 2px; }
 
-  /* ── Meta con líneas en blanco ── */
-  .meta { display: flex; gap: 14px; margin-bottom: 7px; background: #f5f7fa; border: 1px solid #dde1ea; border-radius: 5px; padding: 6px 12px; }
+  /* ── Meta ── */
+  .meta { display: flex; gap: 12px; margin-bottom: 6px; background: #f5f7fa; border: 1px solid #dde1ea; border-radius: 5px; padding: 5px 12px; }
   .metaItem { flex: 1; }
-  .metaLabel { font-size: 7px; font-weight: 700; color: #777; text-transform: uppercase; letter-spacing: 0.4px; }
-  .metaValor { font-size: 10px; font-weight: 700; color: #1a3a6b; margin-top: 2px; min-height: 14px; border-bottom: 1.5px solid #94a3b8; }
+  .metaLabel { font-size: 7px; font-weight: 700; color: #777; text-transform: uppercase; letter-spacing: 0.5px; }
+  .metaValor { font-size: 11px; font-weight: 700; color: #1a3a6b; margin-top: 2px; min-height: 15px; border-bottom: 1.5px solid #94a3b8; }
 
   /* ── Tabla ── */
   table { width: 100%; border-collapse: collapse; table-layout: auto; }
-  th, td { border: 1px solid #aaa; text-align: center; vertical-align: middle; }
+  th, td { border: 1px solid #999; text-align: center; vertical-align: middle; }
 
   /* D1 D2 D3 */
-  .dHead { background: #1a3a6b; color: #fff; font-size: 12px; font-weight: 900; padding: 5px 2px; }
+  .dHead { background: #1a3a6b; color: #fff; font-size: 15px; font-weight: 900; padding: 7px 4px; letter-spacing: 1px; }
 
-  /* Sub-celdas azul claro — en blanco */
-  .subH { background: #dbeafe; height: 9px; padding: 0; border-bottom: 1px solid #93c5fd; }
+  /* Sub-encabezado azul claro */
+  .subH { background: #dbeafe; height: 10px; padding: 0; border-bottom: 1px solid #93c5fd; }
 
-  /* # */
-  th.thNum, td.num { width: 20px; font-size: 8px; color: #888; background: #f8fafc; }
+  /* Número */
+  th.thNum, td.num { width: 24px; font-size: 9px; color: #888; background: #f8fafc; }
 
-  /* Nombre — ancho y letra grande, nunca se recorta */
-  th.thNombre { background: #1a3a6b; color: #fff; font-size: 10px; font-weight: 700; text-align: left; padding-left: 6px; min-width: 160px; }
-  td.nombre { text-align: left; padding: 2px 6px; font-weight: 700; font-size: 11px; white-space: normal; word-break: break-word; min-width: 160px; line-height: 1.25; }
+  /* Columna nombre — NUNCA se recorta */
+  th.thNombre {
+    background: #1a3a6b; color: #fff; font-size: 11px; font-weight: 700;
+    text-align: left; padding: 6px 8px; min-width: 200px;
+  }
+  td.nombre {
+    text-align: left; padding: 3px 8px; font-weight: 800; font-size: 13px;
+    white-space: normal; word-break: break-word; min-width: 200px; line-height: 1.3;
+  }
 
-  /* Celdas de notas en blanco */
-  td.cBlank { height: 20px; background: #fff; }
+  /* Casillas de nota en blanco */
+  td.cBlank { height: 28px; min-width: 52px; background: #fff; }
   tr.impar td.cBlank { background: #f8fafc; }
 
-  /* F — muy pequeña */
-  th.thF { background: #fef3c7; color: #92400e; font-size: 8px; font-weight: 700; width: 16px; padding: 2px 0; }
-  td.cF  { width: 16px; height: 20px; background: #fef9c3; border: 1px solid #fbbf24; }
+  /* Fila de TEMA — crema intensa, la profe escribe el tema de cada casilla */
+  tr.temaRow td { height: 34px; background: #fffbeb; border: 1px solid #fbbf24; }
+  td.temaLabel {
+    text-align: left; padding: 4px 8px; font-size: 9px; font-weight: 800;
+    color: #92400e; background: #fef3c7; white-space: nowrap;
+  }
+  td.cTema { background: #fffbeb; min-width: 52px; height: 34px; }
 
   /* Alternado nombre */
   tr.par  td.nombre { background: #fff; }
-  tr.impar td.nombre { background: #f8fafc; }
+  tr.impar td.nombre { background: #f0f4ff; }
+
+  /* F — estrecha */
+  th.thF { background: #fef3c7; color: #92400e; font-size: 9px; font-weight: 800; width: 20px; padding: 3px 0; }
+  td.cF  { width: 20px; height: 28px; background: #fef9c3; border: 1px solid #fbbf24; }
 
   /* Pie */
-  .footer { margin-top: 8px; display: flex; justify-content: space-between; font-size: 7px; color: #888; border-top: 1px solid #ddd; padding-top: 5px; }
+  .footer { margin-top: 7px; display: flex; justify-content: space-between; font-size: 7px; color: #888; border-top: 1px solid #ddd; padding-top: 5px; }
 </style>
 </head>
 <body>
@@ -413,7 +440,6 @@ export default function ListadoEstudiantesScreen() {
     </div>
   </div>
 
-  <!-- Meta: etiquetas fijas, valores en blanco para que la docente llene -->
   <div class="meta">
     <div class="metaItem"><div class="metaLabel">Materia</div><div class="metaValor">&nbsp;</div></div>
     <div class="metaItem"><div class="metaLabel">Período</div><div class="metaValor">&nbsp;</div></div>
@@ -426,13 +452,16 @@ export default function ListadoEstudiantesScreen() {
     <thead>
       <tr>
         <th class="thNum" rowspan="2">#</th>
-        <th class="thNombre" rowspan="2" style="text-align:left;padding-left:6px;">Estudiante</th>
+        <th class="thNombre" rowspan="2">Estudiante</th>
         ${dHeaders}
         <th class="thF" rowspan="2">F</th>
       </tr>
       <tr>${subHeaders}</tr>
     </thead>
-    <tbody>${filas}</tbody>
+    <tbody>
+      ${filaTema}
+      ${filas}
+    </tbody>
   </table>
 
   <div class="footer">
