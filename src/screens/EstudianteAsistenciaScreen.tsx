@@ -1,130 +1,136 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, ScrollView,
-  StyleSheet, ActivityIndicator, Alert,
+  View, Text, ScrollView, TouchableOpacity,
+  StyleSheet, ActivityIndicator, Alert, StatusBar,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { apiFetch } from '../services/api';
+import { Colors, Typography, Spacing, Radius } from '../theme';
 
 export default function EstudianteAsistenciaScreen() {
+  const navigation = useNavigation();
   const [asistencia, setAsistencia] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    cargarAsistencia();
-  }, []);
+  useEffect(() => { cargarAsistencia(); }, []);
 
   const cargarAsistencia = async () => {
     try {
       setLoading(true);
       const res = await apiFetch('/api/estudiante/asistencia');
-      if (res.ok) {
-        setAsistencia(await res.json());
-      } else {
-        Alert.alert('Error', 'No se pudo cargar la asistencia');
-      }
-    } catch (error: any) {
-      if (error.message !== 'Sesión vencida') {
-        Alert.alert('Error', 'No se pudo conectar al servidor');
-      }
-    } finally {
-      setLoading(false);
-    }
+      if (res.ok) setAsistencia(await res.json());
+      else Alert.alert('Error', 'No se pudo cargar la asistencia');
+    } catch (e: any) {
+      if (e.message !== 'Sesión vencida') Alert.alert('Error', 'No se pudo conectar');
+    } finally { setLoading(false); }
   };
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#1a3a6b" />
-        <Text style={styles.loadingText}>Cargando asistencia...</Text>
+      <View style={styles.flex}>
+        <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={20} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitulo}>Mi Asistencia</Text>
+        </View>
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingTxt}>Cargando asistencia...</Text>
+        </View>
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.titulo}>Mi Asistencia — Período Actual</Text>
+    <View style={styles.flex}>
+      <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
 
-      {asistencia.length === 0 ? (
-        <View style={styles.center}>
-          <Text style={styles.emptyText}>No hay registros de asistencia aún</Text>
-        </View>
-      ) : (
-        asistencia.map((item, idx) => (
-          <View key={idx} style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.materia}>{item.materia}</Text>
-              <View style={[
-                styles.porcentajeBadge,
-                { backgroundColor: item.porcentaje >= 80 ? '#10b981' : item.porcentaje >= 60 ? '#f59e0b' : '#ef4444' }
-              ]}>
-                <Text style={styles.porcentajeText}>{item.porcentaje}%</Text>
-              </View>
-            </View>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={20} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitulo}>Mi Asistencia</Text>
+        <Text style={styles.headerSub}>Período actual</Text>
+      </View>
 
-            {/* Barra de progreso */}
-            <View style={styles.barraFondo}>
-              <View style={[
-                styles.barraRelleno,
-                {
-                  width: `${item.porcentaje}%` as any,
-                  backgroundColor: item.porcentaje >= 80 ? '#10b981' : item.porcentaje >= 60 ? '#f59e0b' : '#ef4444',
-                }
-              ]} />
-            </View>
-
-            {/* Conteos */}
-            <View style={styles.conteosRow}>
-              <View style={styles.conteoItem}>
-                <Text style={styles.conteoNumero}>{item.PRESENTE}</Text>
-                <Text style={styles.conteoLabel}>Presente</Text>
-              </View>
-              <View style={styles.conteoItem}>
-                <Text style={[styles.conteoNumero, { color: '#ef4444' }]}>{item.AUSENTE}</Text>
-                <Text style={styles.conteoLabel}>Ausente</Text>
-              </View>
-              <View style={styles.conteoItem}>
-                <Text style={[styles.conteoNumero, { color: '#f59e0b' }]}>{item.TARDE}</Text>
-                <Text style={styles.conteoLabel}>Tarde</Text>
-              </View>
-              <View style={styles.conteoItem}>
-                <Text style={[styles.conteoNumero, { color: '#3b82f6' }]}>{item.EXCUSADO}</Text>
-                <Text style={styles.conteoLabel}>Excusado</Text>
-              </View>
-            </View>
+      <ScrollView contentContainerStyle={styles.lista} showsVerticalScrollIndicator={false}>
+        {asistencia.length === 0 ? (
+          <View style={styles.center}>
+            <Ionicons name="calendar-outline" size={48} color={Colors.text3} />
+            <Text style={styles.emptyTxt}>No hay registros de asistencia aún</Text>
           </View>
-        ))
-      )}
-
-      <View style={{ height: 32 }} />
-    </ScrollView>
+        ) : (
+          asistencia.map((item, idx) => {
+            const pct = item.porcentaje ?? 0;
+            const color = pct >= 80 ? Colors.success : pct >= 60 ? Colors.warning : Colors.danger;
+            return (
+              <View key={idx} style={styles.card}>
+                <View style={styles.cardTop}>
+                  <Text style={styles.materiaNombre}>{item.materia}</Text>
+                  <View style={[styles.badge, { backgroundColor: color }]}>
+                    <Text style={styles.badgeTxt}>{pct}%</Text>
+                  </View>
+                </View>
+                <View style={styles.barra}>
+                  <View style={[styles.barraRelleno, { width: `${pct}%` as any, backgroundColor: color }]} />
+                </View>
+                <View style={styles.conteos}>
+                  {[
+                    { label: 'Presente', val: item.PRESENTE, color: Colors.success },
+                    { label: 'Ausente',  val: item.AUSENTE,  color: Colors.danger },
+                    { label: 'Tarde',    val: item.TARDE,    color: Colors.warning },
+                    { label: 'Excusado', val: item.EXCUSADO, color: Colors.info },
+                  ].map(c => (
+                    <View key={c.label} style={styles.conteoItem}>
+                      <Text style={[styles.conteoNum, { color: c.color }]}>{c.val ?? 0}</Text>
+                      <Text style={styles.conteoLabel}>{c.label}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            );
+          })
+        )}
+        <View style={{ height: 40 }} />
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6', padding: 16 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 40 },
-  loadingText: { marginTop: 12, color: '#6b7280' },
-  titulo: { fontSize: 18, fontWeight: '700', color: '#1a3a6b', marginBottom: 16 },
-  emptyText: { fontSize: 15, color: '#9ca3af', fontStyle: 'italic' },
+  flex:   { flex: 1, backgroundColor: Colors.bg },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl },
+  header: {
+    backgroundColor: Colors.primary, paddingTop: 52, paddingBottom: 18,
+    paddingHorizontal: Spacing.xl,
+  },
+  backBtn: {
+    position: 'absolute', top: 52, left: Spacing.lg,
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  headerTitulo: { color: '#fff', fontSize: Typography.xl, fontWeight: Typography.extrabold, textAlign: 'center' },
+  headerSub:    { color: 'rgba(255,255,255,0.65)', fontSize: Typography.xs, textAlign: 'center', marginTop: 4 },
+  loadingTxt:   { color: Colors.text3, marginTop: Spacing.md },
+  lista:        { padding: Spacing.lg },
+  emptyTxt:     { color: Colors.text3, fontSize: Typography.base, marginTop: Spacing.md, textAlign: 'center' },
   card: {
-    backgroundColor: '#fff', borderRadius: 12, padding: 16,
-    marginBottom: 12, elevation: 2,
+    backgroundColor: Colors.surface, borderRadius: Radius.lg, padding: Spacing.lg,
+    marginBottom: Spacing.md, borderWidth: 1, borderColor: Colors.border,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
   },
-  cardHeader: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', marginBottom: 12,
-  },
-  materia: { fontSize: 15, fontWeight: '700', color: '#1f2937', flex: 1 },
-  porcentajeBadge: {
-    paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12,
-  },
-  porcentajeText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  barraFondo: {
-    height: 8, backgroundColor: '#f1f5f9', borderRadius: 4, marginBottom: 12,
-  },
-  barraRelleno: { height: 8, borderRadius: 4 },
-  conteosRow: { flexDirection: 'row', justifyContent: 'space-around' },
-  conteoItem: { alignItems: 'center' },
-  conteoNumero: { fontSize: 20, fontWeight: '800', color: '#10b981' },
-  conteoLabel: { fontSize: 11, color: '#6b7280', marginTop: 2 },
+  cardTop:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  materiaNombre:{ fontSize: Typography.base, fontWeight: Typography.bold, color: Colors.text1, flex: 1 },
+  badge:       { paddingHorizontal: 12, paddingVertical: 4, borderRadius: Radius.full },
+  badgeTxt:    { color: '#fff', fontSize: Typography.sm, fontWeight: Typography.extrabold },
+  barra:       { height: 6, backgroundColor: Colors.border, borderRadius: 4, marginBottom: 14, overflow: 'hidden' },
+  barraRelleno:{ height: '100%', borderRadius: 4 },
+  conteos:     { flexDirection: 'row', justifyContent: 'space-around' },
+  conteoItem:  { alignItems: 'center' },
+  conteoNum:   { fontSize: 22, fontWeight: Typography.extrabold },
+  conteoLabel: { fontSize: Typography.xs, color: Colors.text3, marginTop: 2 },
 });

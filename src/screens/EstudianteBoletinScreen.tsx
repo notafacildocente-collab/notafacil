@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, ActivityIndicator, Alert,
+  StyleSheet, ActivityIndicator, Alert, StatusBar,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { apiFetch } from '../services/api';
+import { Colors, Typography, Spacing, Radius } from '../theme';
 
 interface Periodo {
   id: string;
   numero: number;
   cerrado: boolean;
+  fechaInicio?: string;
+  fechaFin?: string;
 }
 
 export default function EstudianteBoletinScreen() {
+  const navigation = useNavigation();
   const [periodos, setPeriodos] = useState<Periodo[]>([]);
   const [periodoActivo, setPeriodoActivo] = useState<Periodo | null>(null);
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState<Periodo | null>(null);
@@ -19,9 +25,7 @@ export default function EstudianteBoletinScreen() {
   const [loading, setLoading] = useState(true);
   const [loadingBoletin, setLoadingBoletin] = useState(false);
 
-  useEffect(() => {
-    cargarPeriodos();
-  }, []);
+  useEffect(() => { cargarPeriodos(); }, []);
 
   const cargarPeriodos = async () => {
     try {
@@ -30,43 +34,28 @@ export default function EstudianteBoletinScreen() {
       if (res.ok) {
         const data: Periodo[] = await res.json();
         setPeriodos(data);
-        // El período activo es el abierto con menor número
-        const abiertos = data.filter(p => !p.cerrado).sort((a, b) => a.numero - b.numero);
-        const activo = abiertos.length > 0 ? abiertos[0] : null;
-        if (activo) setPeriodoActivo(activo);
-        if (activo) setPeriodoActivo(activo);
-        // Seleccionar automáticamente el último período cerrado
-        const cerrados = data.filter(p => p.cerrado);
-        if (cerrados.length > 0) seleccionarPeriodo(cerrados[cerrados.length - 1], activo);
+        // Período activo = el abierto (no cerrado)
+        const activo = data.find(p => !p.cerrado) || null;
+        setPeriodoActivo(activo);
+        // Seleccionar automáticamente el período activo (o el último cerrado)
+        const inicial = activo || data.filter(p => p.cerrado).sort((a, b) => b.numero - a.numero)[0];
+        if (inicial) seleccionarPeriodo(inicial, activo);
       }
-    } catch (error: any) {
-      if (error.message !== 'Sesión vencida') {
-        Alert.alert('Error', 'No se pudieron cargar los períodos');
-      }
-    } finally {
-      setLoading(false);
-    }
+    } catch (e: any) {
+      if (e.message !== 'Sesión vencida') Alert.alert('Error', 'No se pudieron cargar los períodos');
+    } finally { setLoading(false); }
+  };
+
+  /** Un período es "futuro" si su número es mayor al período activo */
+  const esFuturo = (p: Periodo, activo: Periodo | null): boolean => {
+    if (!activo) return false;           // sin período activo → todos accesibles
+    return p.numero > activo.numero;
   };
 
   const seleccionarPeriodo = async (periodo: Periodo, activo?: Periodo | null) => {
-    const periodoActivoActual = activo !== undefined ? activo : periodoActivo;
+    const pa = activo !== undefined ? activo : periodoActivo;
+    if (esFuturo(periodo, pa)) return;   // bloqueado — no hace nada
 
-    // Período futuro — no ha iniciado
-    if (!periodo.cerrado && periodo.id !== periodoActivoActual?.id) {
-      Alert.alert('No disponible', `El Período ${periodo.numero} aún no ha iniciado.`);
-      return;
-    }
-
-    // Período actual — abierto
-    if (!periodo.cerrado && periodo.id === periodoActivoActual?.id) {
-      Alert.alert(
-        `Período ${periodo.numero} — En curso`,
-        'Este período está actualmente en curso. El boletín estará disponible cuando finalice.',
-      );
-      return;
-    }
-
-    // Período cerrado — mostrar boletín
     try {
       setPeriodoSeleccionado(periodo);
       setLoadingBoletin(true);
@@ -77,180 +66,211 @@ export default function EstudianteBoletinScreen() {
       } else {
         Alert.alert('Error', 'No se pudo cargar el boletín');
       }
-    } catch (error: any) {
-      if (error.message !== 'Sesión vencida') {
-        Alert.alert('Error', 'No se pudo conectar al servidor');
-      }
-    } finally {
-      setLoadingBoletin(false);
-    }
+    } catch (e: any) {
+      if (e.message !== 'Sesión vencida') Alert.alert('Error', 'No se pudo conectar al servidor');
+    } finally { setLoadingBoletin(false); }
   };
 
-  const getEstadoPeriodo = (periodo: Periodo) => {
-    if (periodo.cerrado) return 'cerrado';
-    if (periodo.id === periodoActivo?.id) return 'activo';
-    return 'futuro';
+  const getEstado = (p: Periodo, pa: Periodo | null) => {
+    if (esFuturo(p, pa)) return 'futuro';
+    if (!p.cerrado) return 'activo';
+    return 'cerrado';
   };
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#1a3a6b" />
-        <Text style={styles.loadingText}>Cargando períodos...</Text>
+      <View style={styles.flex}>
+        <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={20} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitulo}>Boletín</Text>
+        </View>
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingTxt}>Cargando períodos...</Text>
+        </View>
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.titulo}>Boletín de Calificaciones</Text>
+    <View style={styles.flex}>
+      <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
 
-      {/* Selector de períodos */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.periodosScroll}>
-        {periodos.map((p) => {
-          const estado = getEstadoPeriodo(p);
-          const seleccionado = periodoSeleccionado?.id === p.id;
+      {/* Header interno */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={20} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitulo}>Boletín de Calificaciones</Text>
+      </View>
 
-          return (
-            <TouchableOpacity
-              key={p.id}
-              style={[
-                styles.periodoChip,
-                seleccionado && styles.periodoChipSeleccionado,
-                estado === 'activo' && styles.periodoChipActivo,
-                estado === 'futuro' && styles.periodoChipFuturo,
-              ]}
-              onPress={() => seleccionarPeriodo(p)}
-            >
-              <Text style={[
-                styles.periodoChipText,
-                seleccionado && styles.periodoChipTextSeleccionado,
-                estado === 'futuro' && styles.periodoChipTextFuturo,
-              ]}>
-                Período {p.numero}
-              </Text>
-              <Text style={[
-                styles.periodoChipTag,
-                estado === 'activo' && { color: '#10b981' },
-                estado === 'futuro' && { color: '#9ca3af' },
-                estado === 'cerrado' && { color: '#6b7280' },
-              ]}>
-                {estado === 'cerrado' ? 'Finalizado' : estado === 'activo' ? 'En curso' : 'Próximo'}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
 
-      {loadingBoletin && (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#1a3a6b" />
-          <Text style={styles.loadingText}>Cargando boletín...</Text>
-        </View>
-      )}
+        {/* Selector de períodos */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.periodosRow}>
+          {periodos.map((p) => {
+            const estado = getEstado(p, periodoActivo);
+            const seleccionado = periodoSeleccionado?.id === p.id;
+            const futuro = estado === 'futuro';
 
-      {boletin && !loadingBoletin && (
-        <View>
-          <View style={[
-            styles.resumenCard,
-            { backgroundColor: boletin.aprobado ? '#10b981' : '#ef4444' }
-          ]}>
-            <Text style={styles.resumenTitulo}>Período {boletin.periodo}</Text>
-            <Text style={styles.resumenPromedio}>{boletin.promedioGeneral.toFixed(1)}</Text>
-            <Text style={styles.resumenEstado}>
-              {boletin.aprobado ? '✓ Promedio aprobado' : '✗ Promedio reprobado'}
-            </Text>
+            return (
+              <TouchableOpacity
+                key={p.id}
+                style={[
+                  styles.chip,
+                  seleccionado && styles.chipSel,
+                  estado === 'activo' && styles.chipActivo,
+                  futuro && styles.chipFuturo,
+                ]}
+                onPress={() => seleccionarPeriodo(p)}
+                disabled={futuro}
+                activeOpacity={futuro ? 1 : 0.75}
+              >
+                <Text style={[
+                  styles.chipTxt,
+                  seleccionado && styles.chipTxtSel,
+                  futuro && styles.chipTxtFuturo,
+                ]}>
+                  Período {p.numero}
+                </Text>
+                <Text style={[
+                  styles.chipTag,
+                  estado === 'activo' && { color: Colors.success },
+                  estado === 'cerrado' && { color: Colors.text3 },
+                  futuro && { color: Colors.text3 },
+                ]}>
+                  {futuro ? 'Próximo' : estado === 'activo' ? 'En curso' : 'Finalizado'}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        {loadingBoletin && (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color={Colors.primary} />
+            <Text style={styles.loadingTxt}>Cargando boletín...</Text>
           </View>
+        )}
 
-          <View style={styles.tabla}>
-            <View style={styles.tablaHeader}>
-              <Text style={[styles.tablaHeaderText, { flex: 2 }]}>Materia</Text>
-              <Text style={styles.tablaHeaderText}>Cog</Text>
-              <Text style={styles.tablaHeaderText}>Pro</Text>
-              <Text style={styles.tablaHeaderText}>Act</Text>
-              <Text style={styles.tablaHeaderText}>Final</Text>
+        {boletin && !loadingBoletin && (
+          <>
+            {/* Resumen promedio */}
+            <View style={[
+              styles.resumen,
+              { backgroundColor: boletin.aprobado ? Colors.success : Colors.danger },
+            ]}>
+              <Text style={styles.resumenLabel}>
+                Período {boletin.periodo}{periodoActivo && !periodoSeleccionado?.cerrado ? ' · En curso' : ''}
+              </Text>
+              <Text style={styles.resumenPromedio}>{boletin.promedioGeneral.toFixed(1)}</Text>
+              <Text style={styles.resumenEstado}>
+                {boletin.promedioGeneral === 0
+                  ? 'Sin notas registradas aún'
+                  : boletin.aprobado ? '✓ Promedio aprobado' : '✗ Promedio reprobado'}
+              </Text>
             </View>
 
-            {boletin.materias.map((m: any, idx: number) => (
-              <View key={m.materiaId} style={[styles.tablaFila, idx % 2 === 0 && styles.tablaFilaPar]}>
-                <Text style={[styles.tablaCelda, { flex: 2, fontWeight: '600' }]} numberOfLines={1}>
-                  {m.materia}
-                </Text>
-                {m.desempenos.map((d: any) => (
-                  <Text
-                    key={d.nombre}
-                    style={[
-                      styles.tablaCelda,
-                      { color: d.promedio >= 3 ? '#059669' : d.promedio === 0 ? '#9ca3af' : '#ef4444' }
-                    ]}
-                  >
-                    {d.promedio.toFixed(1)}
-                  </Text>
+            {/* Tabla de notas */}
+            {boletin.materias.length > 0 && (
+              <View style={styles.tabla}>
+                <View style={styles.tablaHeader}>
+                  <Text style={[styles.thTxt, { flex: 2, textAlign: 'left' }]}>Materia</Text>
+                  <Text style={styles.thTxt}>Nota</Text>
+                </View>
+                {boletin.materias.map((m: any, idx: number) => (
+                  <View key={m.materiaId} style={[styles.tablaFila, idx % 2 === 0 && styles.filaPar]}>
+                    <Text style={[styles.tdTxt, { flex: 2, fontWeight: Typography.semibold }]} numberOfLines={1}>
+                      {m.materia}
+                    </Text>
+                    <Text style={[
+                      styles.tdTxt,
+                      styles.tdFinal,
+                      { color: m.notaFinal === 0 ? Colors.text3 : m.notaFinal >= 3 ? Colors.success : Colors.danger },
+                    ]}>
+                      {m.notaFinal === 0 ? '—' : m.notaFinal.toFixed(1)}
+                    </Text>
+                  </View>
                 ))}
-                <Text style={[
-                  styles.tablaCelda,
-                  styles.tablaFinal,
-                  { color: m.notaFinal >= 3 ? '#059669' : '#ef4444' }
-                ]}>
-                  {m.notaFinal.toFixed(1)}
-                </Text>
               </View>
-            ))}
+            )}
+
+            {boletin.materias.length === 0 && (
+              <View style={styles.sinDatos}>
+                <Ionicons name="document-outline" size={40} color={Colors.text3} />
+                <Text style={styles.sinDatosTxt}>No hay notas registradas para este período</Text>
+              </View>
+            )}
+          </>
+        )}
+
+        {!periodoSeleccionado && !loadingBoletin && (
+          <View style={styles.sinDatos}>
+            <Text style={styles.sinDatosTxt}>Selecciona un período para ver el boletín</Text>
           </View>
-        </View>
-      )}
+        )}
 
-      {!periodoSeleccionado && !loadingBoletin && (
-        <View style={styles.centerPadding}>
-          <Text style={styles.emptyText}>Selecciona un período finalizado para ver el boletín</Text>
-        </View>
-      )}
-
-      <View style={{ height: 32 }} />
-    </ScrollView>
+        <View style={{ height: 40 }} />
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6', padding: 16 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  centerPadding: { alignItems: 'center', paddingTop: 40 },
-  loadingText: { marginTop: 12, color: '#6b7280' },
-  titulo: { fontSize: 18, fontWeight: '700', color: '#1a3a6b', marginBottom: 16 },
-  emptyText: { fontSize: 15, color: '#9ca3af', fontStyle: 'italic', textAlign: 'center' },
-  periodosScroll: { marginBottom: 20 },
-  periodoChip: {
-    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12,
-    backgroundColor: '#fff', borderWidth: 1, borderColor: '#e2e8f0',
+  flex:   { flex: 1, backgroundColor: Colors.bg },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl },
+
+  header: {
+    backgroundColor: Colors.primary, paddingTop: 52, paddingBottom: 18,
+    paddingHorizontal: Spacing.xl, gap: 4,
+  },
+  backBtn: {
+    position: 'absolute', top: 52, left: Spacing.lg,
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  headerTitulo: { color: '#fff', fontSize: Typography.lg, fontWeight: Typography.extrabold, textAlign: 'center' },
+
+  body: { padding: Spacing.lg },
+  loadingTxt: { color: Colors.text3, marginTop: Spacing.md },
+
+  // Chips de período
+  periodosRow: { marginBottom: Spacing.lg },
+  chip: {
+    paddingHorizontal: 16, paddingVertical: 10, borderRadius: Radius.md,
+    backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border,
     marginRight: 10, alignItems: 'center', minWidth: 100,
   },
-  periodoChipSeleccionado: { backgroundColor: '#1a3a6b', borderColor: '#1a3a6b' },
-  periodoChipActivo: { borderColor: '#10b981', borderWidth: 2 },
-  periodoChipFuturo: { opacity: 0.4 },
-  periodoChipText: { fontSize: 13, fontWeight: '700', color: '#374151' },
-  periodoChipTextSeleccionado: { color: '#fff' },
-  periodoChipTextFuturo: { color: '#9ca3af' },
-  periodoChipTag: { fontSize: 10, fontWeight: '600', marginTop: 3 },
-  resumenCard: {
-    borderRadius: 16, padding: 24, alignItems: 'center', marginBottom: 20,
-  },
-  resumenTitulo: { color: '#fff', fontSize: 14, fontWeight: '600', opacity: 0.9 },
-  resumenPromedio: { color: '#fff', fontSize: 52, fontWeight: '800', lineHeight: 60 },
-  resumenEstado: { color: '#fff', fontSize: 14, fontWeight: '600', marginTop: 4 },
-  tabla: { backgroundColor: '#fff', borderRadius: 12, overflow: 'hidden', elevation: 2 },
+  chipSel:    { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  chipActivo: { borderColor: Colors.success, borderWidth: 2 },
+  chipFuturo: { opacity: 0.38 },
+  chipTxt:    { fontSize: Typography.sm, fontWeight: Typography.bold, color: Colors.text1 },
+  chipTxtSel: { color: '#fff' },
+  chipTxtFuturo: { color: Colors.text3 },
+  chipTag:    { fontSize: 10, fontWeight: Typography.semibold, marginTop: 3 },
+
+  // Resumen
+  resumen: { borderRadius: Radius.lg, padding: 24, alignItems: 'center', marginBottom: Spacing.lg },
+  resumenLabel:   { color: '#fff', fontSize: Typography.sm, fontWeight: Typography.semibold, opacity: 0.85 },
+  resumenPromedio:{ color: '#fff', fontSize: 52, fontWeight: Typography.extrabold, lineHeight: 60 },
+  resumenEstado:  { color: '#fff', fontSize: Typography.sm, fontWeight: Typography.semibold, marginTop: 4 },
+
+  // Tabla
+  tabla: { backgroundColor: Colors.surface, borderRadius: Radius.lg, overflow: 'hidden', elevation: 2 },
   tablaHeader: {
-    flexDirection: 'row', backgroundColor: '#1a3a6b',
-    paddingVertical: 10, paddingHorizontal: 12,
+    flexDirection: 'row', backgroundColor: Colors.primary,
+    paddingVertical: 10, paddingHorizontal: 14,
   },
-  tablaHeaderText: {
-    flex: 1, color: '#fff', fontWeight: '700',
-    fontSize: 11, textAlign: 'center',
-  },
-  tablaFila: {
-    flexDirection: 'row', paddingVertical: 10,
-    paddingHorizontal: 12, backgroundColor: '#fff',
-  },
-  tablaFilaPar: { backgroundColor: '#f9fafb' },
-  tablaCelda: { flex: 1, fontSize: 12, textAlign: 'center', color: '#374151' },
-  tablaFinal: { fontWeight: '800', fontSize: 13 },
+  thTxt: { flex: 1, color: '#fff', fontWeight: Typography.bold, fontSize: 11, textAlign: 'center' },
+  tablaFila: { flexDirection: 'row', paddingVertical: 11, paddingHorizontal: 14, backgroundColor: Colors.surface },
+  filaPar:   { backgroundColor: Colors.bg },
+  tdTxt:     { flex: 1, fontSize: 13, textAlign: 'center', color: Colors.text1 },
+  tdFinal:   { fontWeight: Typography.extrabold, fontSize: 15 },
+
+  sinDatos:    { alignItems: 'center', paddingTop: 40, gap: 12 },
+  sinDatosTxt: { fontSize: Typography.base, color: Colors.text3, textAlign: 'center', fontStyle: 'italic' },
 });

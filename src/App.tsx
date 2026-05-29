@@ -165,10 +165,10 @@ function App() {
               /* ── Panel Estudiante ── */
               <>
                 <Stack.Screen name="EstudianteHome" component={EstudianteScreen} options={{ headerShown: false }} />
-                <Stack.Screen name="EstudianteNotas" component={EstudianteNotasScreen} options={{ title: 'Mis Notas', headerBackVisible: true }} />
-                <Stack.Screen name="EstudianteHorario" component={EstudianteHorarioScreen} options={{ title: 'Mi Horario', headerBackVisible: true }} />
-                <Stack.Screen name="EstudianteAsistencia" component={EstudianteAsistenciaScreen} options={{ title: 'Mi Asistencia', headerBackVisible: true }} />
-                <Stack.Screen name="EstudianteBoletin" component={EstudianteBoletinScreen} options={{ title: 'Boletín', headerBackVisible: true }} />
+                <Stack.Screen name="EstudianteNotas" component={EstudianteNotasScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="EstudianteHorario" component={EstudianteHorarioScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="EstudianteAsistencia" component={EstudianteAsistenciaScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="EstudianteBoletin" component={EstudianteBoletinScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="Calendario" component={CalendarioScreen} options={{ headerShown: false }} />
               </>
 
