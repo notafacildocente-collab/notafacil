@@ -3,7 +3,6 @@ import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, ActivityIndicator, Alert, StatusBar,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { apiFetch } from '../services/api';
 import { Colors, Typography, Spacing, Radius } from '../theme';
@@ -16,8 +15,7 @@ interface Periodo {
   fechaFin?: string;
 }
 
-export default function EstudianteBoletinScreen() {
-  const navigation = useNavigation();
+export default function EstudianteBoletinScreen({ navigation }: any) {
   const [periodos, setPeriodos] = useState<Periodo[]>([]);
   const [periodoActivo, setPeriodoActivo] = useState<Periodo | null>(null);
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState<Periodo | null>(null);

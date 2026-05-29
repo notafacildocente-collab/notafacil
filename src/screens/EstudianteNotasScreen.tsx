@@ -3,7 +3,6 @@ import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, ActivityIndicator, Alert, StatusBar,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { apiFetch } from '../services/api';
 import { Colors, Typography, Spacing, Radius } from '../theme';
@@ -21,8 +20,7 @@ interface NotaMateria {
   notaFinal: number;
 }
 
-export default function EstudianteNotasScreen() {
-  const navigation = useNavigation();
+export default function EstudianteNotasScreen({ navigation }: any) {
   const [notas, setNotas] = useState<NotaMateria[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandida, setExpandida] = useState<string | null>(null);

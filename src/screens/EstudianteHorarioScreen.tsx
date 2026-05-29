@@ -3,7 +3,6 @@ import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, ActivityIndicator, Alert, StatusBar,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { apiFetch } from '../services/api';
 import { Colors, Typography, Spacing, Radius, materiaColor } from '../theme';
@@ -11,8 +10,7 @@ import { Colors, Typography, Spacing, Radius, materiaColor } from '../theme';
 const DIAS = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 const DIAS_CORTO = ['', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie'];
 
-export default function EstudianteHorarioScreen() {
-  const navigation = useNavigation();
+export default function EstudianteHorarioScreen({ navigation }: any) {
   const hoy = new Date().getDay();
   const diaInicial = hoy === 0 || hoy === 6 ? 1 : hoy;
   const [diaActivo, setDiaActivo] = useState(diaInicial);

@@ -3,13 +3,11 @@ import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, ActivityIndicator, Alert, StatusBar,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { apiFetch } from '../services/api';
 import { Colors, Typography, Spacing, Radius } from '../theme';
 
-export default function EstudianteAsistenciaScreen() {
-  const navigation = useNavigation();
+export default function EstudianteAsistenciaScreen({ navigation }: any) {
   const [asistencia, setAsistencia] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
