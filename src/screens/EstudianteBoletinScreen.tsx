@@ -83,7 +83,9 @@ export default function EstudianteBoletinScreen({ navigation }: any) {
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={20} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitulo}>Boletín</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.headerTitulo}>Boletín</Text>
+          </View>
         </View>
         <View style={styles.center}>
           <ActivityIndicator size="large" color={Colors.primary} />
@@ -102,7 +104,9 @@ export default function EstudianteBoletinScreen({ navigation }: any) {
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={20} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitulo}>Boletín de Calificaciones</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.headerTitulo}>Boletín de Calificaciones</Text>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
@@ -223,15 +227,14 @@ const styles = StyleSheet.create({
 
   header: {
     backgroundColor: Colors.primary, paddingTop: 52, paddingBottom: 18,
-    paddingHorizontal: Spacing.xl, gap: 4,
+    paddingHorizontal: Spacing.lg, flexDirection: 'row', alignItems: 'center', gap: 12,
   },
   backBtn: {
-    position: 'absolute', top: 52, left: Spacing.lg,
     width: 36, height: 36, borderRadius: 18,
     backgroundColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center', justifyContent: 'center',
   },
-  headerTitulo: { color: '#fff', fontSize: Typography.lg, fontWeight: Typography.extrabold, textAlign: 'center' },
+  headerTitulo: { color: '#fff', fontSize: Typography.lg, fontWeight: Typography.extrabold },
 
   body: { padding: Spacing.lg },
   loadingTxt: { color: Colors.text3, marginTop: Spacing.md },
