@@ -348,9 +348,9 @@ export default function CalificacionScreen() {
     return (
       <View style={styles.loadingWrap}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-        <Text style={{ color: '#64748B', fontSize: 15, marginBottom: 20 }}>No hay estudiantes en este curso</Text>
+        <Text style={{ color: '#475569', fontSize: 15, marginBottom: 20 }}>No hay estudiantes en este curso</Text>
         <TouchableOpacity
-          style={{ backgroundColor: '#1E3A5F', paddingHorizontal: 24, paddingVertical: 10, borderRadius: 8 }}
+          style={{ backgroundColor: '#2D5FA8', paddingHorizontal: 24, paddingVertical: 10, borderRadius: 8 }}
           onPress={() => navigation.goBack()}
         >
           <Text style={{ color: '#fff', fontWeight: '600' }}>Volver</Text>
@@ -448,19 +448,6 @@ export default function CalificacionScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Botón IA — pill pequeño */}
-            <TouchableOpacity
-              style={styles.iaPill}
-              onPress={() =>
-                (navigation as any).navigate('CalificarIA', {
-                  asignacionId, materiaId, materiaNombre, periodoId, periodoNumero,
-                })
-              }
-              activeOpacity={0.8}
-            >
-              <Ionicons name="camera-outline" size={13} color="#FFFFFF" style={{ marginRight: 4 }} />
-              <Text style={styles.iaPillText}>Calificar con IA</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Anillo de nota final (outline) */}
@@ -476,7 +463,7 @@ export default function CalificacionScreen() {
         {loadingNotas && (
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 20 }}>
             <ActivityIndicator size="small" color="#1E3A5F" />
-            <Text style={{ marginLeft: 8, color: '#64748B', fontSize: 14 }}>Cargando notas...</Text>
+            <Text style={{ marginLeft: 8, color: '#475569', fontSize: 14 }}>Cargando notas...</Text>
           </View>
         )}
 
@@ -695,7 +682,7 @@ export default function CalificacionScreen() {
               onChangeText={setTelefonoInput}
               maxLength={15}
             />
-            <Text style={{ fontSize: 11, color: '#9ca3af', marginTop: 6 }}>
+            <Text style={{ fontSize: 11, color: '#94A3B8', marginTop: 6 }}>
               Al registrar el teléfono, recibirás opción de enviar WhatsApp al guardar cada nota.
             </Text>
             <View style={styles.modalBotones}>
@@ -736,7 +723,7 @@ export default function CalificacionScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: '#F0F4F9' },
   loadingWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F0F4F9' },
-  loadingText: { marginTop: 12, color: '#64748B', fontSize: 15 },
+  loadingText: { marginTop: 12, color: '#475569', fontSize: 15 },
 
   // ── Header claro ──
   header: {
@@ -756,7 +743,7 @@ const styles = StyleSheet.create({
   },
   headerContent: { flex: 1 },
   headerMateria: { color: '#0F172A', fontWeight: '700', fontSize: 17 },
-  headerSub: { color: '#64748B', fontSize: 12, marginTop: 2, fontWeight: '500' },
+  headerSub: { color: '#475569', fontSize: 12, marginTop: 2, fontWeight: '500' },
 
   // ── Búsqueda ──
   searchRow: {
@@ -774,9 +761,9 @@ const styles = StyleSheet.create({
   chipContainer: { paddingHorizontal: 12, paddingVertical: 9, gap: 8, flexDirection: 'row', alignItems: 'center' },
   chip: {
     paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20,
-    backgroundColor: '#F1F5F9', borderWidth: 1.5, borderColor: '#CBD5E1',
+    backgroundColor: '#F8FAFC', borderWidth: 1.5, borderColor: '#CBD5E1',
   },
-  chipActivo: { backgroundColor: '#1E3A5F', borderColor: '#1E3A5F' },
+  chipActivo: { backgroundColor: '#2D5FA8', borderColor: '#2D5FA8' },
   chipText: { fontSize: 13, color: '#475569', fontWeight: '600' },
   chipTextActivo: { color: '#FFFFFF', fontWeight: '700' },
 
@@ -799,16 +786,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EFF6FF', paddingHorizontal: 8, paddingVertical: 3,
     borderRadius: 8, borderWidth: 1, borderColor: '#BFDBFE',
   },
-  telefonoBtnText: { fontSize: 11, color: '#2563EB', fontWeight: '600' },
-
-  // ── Pill IA ──
-  iaPill: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#2563EB',
-    paddingHorizontal: 12, paddingVertical: 6,
-    borderRadius: 20, alignSelf: 'flex-start',
-  },
-  iaPillText: { color: '#FFFFFF', fontWeight: '700', fontSize: 12 },
+  telefonoBtnText: { fontSize: 11, color: '#2D5FA8', fontWeight: '600' },
 
   // ── Anillo nota final (outline) ──
   notaFinalRing: {
@@ -835,7 +813,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: '#E2E8F0',
   },
   desempenoTitulo: { fontSize: 13, fontWeight: '700', color: '#1E293B' },
-  desempenoNombre: { fontSize: 11, color: '#64748B', marginTop: 1, maxWidth: 180 },
+  desempenoNombre: { fontSize: 11, color: '#475569', marginTop: 1, maxWidth: 180 },
   promedioWrap: { alignItems: 'flex-end' },
   promedioCountTxt: { fontSize: 10, color: '#94A3B8', fontWeight: '500' },
   promedioValorTxt: { fontSize: 20, fontWeight: '800', lineHeight: 24 },
@@ -852,7 +830,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   notaFilaSeparador: {
-    borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+    borderBottomWidth: 1, borderBottomColor: '#F8FAFC',
   },
   notaDescripcion: { fontSize: 13, color: '#1E293B', fontWeight: '600' },
   notaFecha: { fontSize: 11, color: '#94A3B8', marginTop: 2 },
@@ -860,7 +838,7 @@ const styles = StyleSheet.create({
   eliminarBtn: { padding: 4 },
 
   agregarBtn: {
-    backgroundColor: '#1E3A5F', borderRadius: 10, paddingVertical: 11,
+    backgroundColor: '#2D5FA8', borderRadius: 10, paddingVertical: 11,
     alignItems: 'center', marginTop: 10,
   },
   agregarBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
@@ -872,27 +850,27 @@ const styles = StyleSheet.create({
     padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24,
   },
   modalTitulo: { fontSize: 16, fontWeight: '800', color: '#0F172A', marginBottom: 4 },
-  modalSubtitulo: { fontSize: 13, color: '#64748B', marginBottom: 16, fontWeight: '600' },
+  modalSubtitulo: { fontSize: 13, color: '#475569', marginBottom: 16, fontWeight: '600' },
 
   botonIA: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#1D4ED8', borderRadius: 10,
+    backgroundColor: '#2D5FA8', borderRadius: 10,
     paddingVertical: 11, marginBottom: 8,
   },
   botonIAText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
 
   thumbnailsRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12, paddingHorizontal: 4 },
   thumbnailContainer: { alignItems: 'center', position: 'relative' },
-  thumbnail: { width: 68, height: 68, borderRadius: 8, borderWidth: 1.5, borderColor: '#1D4ED8' },
+  thumbnail: { width: 68, height: 68, borderRadius: 8, borderWidth: 1.5, borderColor: '#2D5FA8' },
   thumbnailRemove: {
     position: 'absolute', top: -7, right: -7,
     backgroundColor: '#DC2626', borderRadius: 10,
     width: 20, height: 20, justifyContent: 'center', alignItems: 'center',
   },
   thumbnailRemoveText: { color: '#FFFFFF', fontSize: 10, fontWeight: '700' },
-  thumbnailLabel: { fontSize: 10, color: '#1D4ED8', fontWeight: '600', marginTop: 4 },
+  thumbnailLabel: { fontSize: 10, color: '#2D5FA8', fontWeight: '600', marginTop: 4 },
   botonAnalizar: {
-    flex: 1, backgroundColor: '#1E3A5F', borderRadius: 10,
+    flex: 1, backgroundColor: '#2D5FA8', borderRadius: 10,
     paddingVertical: 12, alignItems: 'center', justifyContent: 'center', minHeight: 68,
   },
   botonAnalizarText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13, textAlign: 'center', lineHeight: 18 },
@@ -902,26 +880,26 @@ const styles = StyleSheet.create({
     borderRadius: 10, padding: 12, marginBottom: 12,
   },
   sugerenciaHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-  sugerenciaLabel: { fontSize: 10, fontWeight: '800', color: '#1E3A5F', letterSpacing: 0.6 },
+  sugerenciaLabel: { fontSize: 10, fontWeight: '800', color: '#2D5FA8', letterSpacing: 0.6 },
   sugerenciaNota: { fontSize: 28, fontWeight: '900' },
   sugerenciaRazonamiento: { fontSize: 13, color: '#475569', lineHeight: 18, marginBottom: 10 },
-  botonAceptarIA: { backgroundColor: '#1E3A5F', borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
+  botonAceptarIA: { backgroundColor: '#2D5FA8', borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
   botonAceptarIAText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
 
-  inputLabel: { fontSize: 12, fontWeight: '700', color: '#374151', marginBottom: 6, marginTop: 12 },
+  inputLabel: { fontSize: 12, fontWeight: '700', color: '#475569', marginBottom: 6, marginTop: 12 },
   input: {
     borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 8,
     paddingHorizontal: 12, paddingVertical: 10,
     fontSize: 15, color: '#0F172A', backgroundColor: '#F8FAFC',
   },
   inputMultiline: { minHeight: 72, textAlignVertical: 'top' },
-  inputSugerida: { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
+  inputSugerida: { borderColor: '#2D5FA8', backgroundColor: '#EFF6FF' },
 
   modalBotones: { flexDirection: 'row', gap: 12, marginTop: 24 },
   botonModal: { flex: 1, paddingVertical: 13, borderRadius: 10, alignItems: 'center' },
-  botonCancelar: { backgroundColor: '#F1F5F9' },
+  botonCancelar: { backgroundColor: '#F8FAFC' },
   botonCancelarText: { color: '#475569', fontWeight: '600', fontSize: 15 },
-  botonGuardar: { backgroundColor: '#1E3A5F' },
+  botonGuardar: { backgroundColor: '#2D5FA8' },
   botonGuardarText: { color: '#FFFFFF', fontWeight: '700', fontSize: 15 },
   botonDisabled: { opacity: 0.55 },
 });

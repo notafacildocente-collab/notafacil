@@ -3,6 +3,7 @@ import {
   View, Text, FlatList, TouchableOpacity,
   StyleSheet, ActivityIndicator, Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { apiFetch } from '../services/api';
 
 interface Periodo {
@@ -43,8 +44,8 @@ export default function SeleccionarPeriodoScreen({ navigation, route }: any) {
   };
 
   const handleSeleccionarPeriodo = async (periodo: Periodo) => {
-    // Los modos 'reporte', 'calificarIA', 'riesgoIA' y 'listado' permiten ver períodos cerrados
-    if (periodo.cerrado && modo !== 'reporte' && modo !== 'calificarIA' && modo !== 'riesgoIA' && modo !== 'listado') {
+    // Los modos 'reporte', 'calificarIA' y 'listado' permiten ver períodos cerrados
+    if (periodo.cerrado && modo !== 'reporte' && modo !== 'calificarIA' && modo !== 'listado') {
       Alert.alert('Periodo cerrado', 'Este periodo no permite modificaciones.');
       return;
     }
@@ -76,8 +77,6 @@ export default function SeleccionarPeriodoScreen({ navigation, route }: any) {
         navigation.navigate('Reporte', params);
       } else if (modo === 'calificarIA') {
         navigation.navigate('CalificarIA', params);
-      } else if (modo === 'riesgoIA') {
-        navigation.navigate('Riesgo', { ...params, materiaNombre, periodoNumero: periodo.numero });
       } else if (modo === 'listado') {
         navigation.navigate('Listado', { ...params, materiaNombre, periodoNumero: periodo.numero });
       } else {
@@ -104,8 +103,13 @@ export default function SeleccionarPeriodoScreen({ navigation, route }: any) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.materiaNombre}>{materiaNombre}</Text>
-        <Text style={styles.subtitle}>Selecciona el periodo</Text>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+        </TouchableOpacity>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.materiaNombre}>{materiaNombre}</Text>
+          <Text style={styles.subtitle}>Selecciona el periodo</Text>
+        </View>
       </View>
       {periodos.length === 0 ? (
         <View style={styles.center}>
@@ -120,7 +124,7 @@ export default function SeleccionarPeriodoScreen({ navigation, route }: any) {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={[styles.card, item.cerrado && modo !== 'reporte' && modo !== 'calificarIA' && modo !== 'riesgoIA' && modo !== 'listado' && styles.cardCerrado]}
+              style={[styles.card, item.cerrado && modo !== 'reporte' && modo !== 'calificarIA' && modo !== 'listado' && styles.cardCerrado]}
               onPress={() => handleSeleccionarPeriodo(item)}
               disabled={navegando}
             >
@@ -147,20 +151,28 @@ export default function SeleccionarPeriodoScreen({ navigation, route }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F1F5F9', padding: 16 },
+  container: { flex: 1, backgroundColor: '#F8FAFC', padding: 16 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     marginBottom: 16,
     padding: 18,
-    backgroundColor: '#1E3A5F',
+    backgroundColor: '#2D5FA8',
     borderRadius: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  backBtn: {
+    width: 34, height: 34, borderRadius: 17,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center', justifyContent: 'center',
   },
   materiaNombre: { fontSize: 17, fontWeight: '700', color: '#FFFFFF' },
-  subtitle: { fontSize: 12, color: '#93C5FD', marginTop: 4, letterSpacing: 0.3 },
-  loadingText: { marginTop: 12, color: '#64748B' },
-  emptyText: { fontSize: 15, color: '#64748B', marginBottom: 16 },
+  subtitle: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4, letterSpacing: 0.3 },
+  loadingText: { marginTop: 12, color: '#475569' },
+  emptyText: { fontSize: 15, color: '#475569', marginBottom: 16 },
   retryBtn: {
-    backgroundColor: '#1E3A5F', paddingHorizontal: 24,
+    backgroundColor: '#2D5FA8', paddingHorizontal: 24,
     paddingVertical: 10, borderRadius: 8,
   },
   retryText: { color: '#FFFFFF', fontWeight: '600' },
@@ -186,7 +198,7 @@ const styles = StyleSheet.create({
   fechas: { fontSize: 11, color: '#94A3B8', marginTop: 2 },
   cerradoBadge: {
     fontSize: 11, fontWeight: '600', marginTop: 5,
-    color: '#64748B', backgroundColor: '#F1F5F9',
+    color: '#475569', backgroundColor: '#F8FAFC',
     paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6,
   },
   arrow: { fontSize: 22, color: '#94A3B8', fontWeight: '300' },

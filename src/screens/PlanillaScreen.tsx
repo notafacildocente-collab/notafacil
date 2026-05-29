@@ -40,7 +40,7 @@ export default function PlanillaScreen() {
     </View>
   );
 
-  if (planilla.length === 0) return <View style={styles.center}><Text style={{color:'#5A5070'}}>Sin datos</Text></View>;
+  if (planilla.length === 0) return <View style={styles.center}><Text style={{color:'#6b7280'}}>Sin datos</Text></View>;
 
   const desempenos = planilla[0].desempenos;
   const maxNotas = desempenos.map((_:any, di:number) =>
@@ -60,7 +60,7 @@ export default function PlanillaScreen() {
     <View style={styles.flex}>
       <View style={styles.headerBar}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={20} color="#ffffff" />
+          <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerSubtitle}>Malla por Grupos</Text>
@@ -154,37 +154,45 @@ export default function PlanillaScreen() {
   );
 }
 
+
 const styles = StyleSheet.create({
-  flex: {flex:1, backgroundColor:'#0D0A1A'},
-  center: {flex:1, justifyContent:'center', alignItems:'center'},
-  loadingText: {marginTop:12, color:'#5A5070'},
-  headerBar: {backgroundColor:'#7C3AED', paddingHorizontal:16, paddingVertical:12, flexDirection:'row', justifyContent:'space-between', alignItems:'center', gap:10},
-  backBtn: {width:34, height:34, borderRadius:17, backgroundColor:'rgba(255,255,255,0.2)', alignItems:'center', justifyContent:'center'},
-  headerSubtitle: {color:'rgba(255,255,255,0.7)', fontSize:11, fontWeight:'600', letterSpacing:0.5, textTransform:'uppercase', marginBottom:2},
-  headerMateria: {color:'#fff', fontWeight:'700', fontSize:16},
-  headerPeriodo: {color:'rgba(255,255,255,0.75)', fontSize:14, fontWeight:'600'},
-  fila: {flexDirection:'row', alignItems:'stretch', borderBottomWidth:1, borderBottomColor:'rgba(255,255,255,0.07)', backgroundColor:'#fff'},
-  filaPar: {backgroundColor:'#f9fafb'},
-  encCell: {paddingVertical:8, paddingHorizontal:4, alignItems:'center', justifyContent:'center', backgroundColor:'#eff6ff', borderRightWidth:1, borderRightColor:'#bfdbfe'},
-  encTxt: {fontSize:12, fontWeight:'700', color:'#7C3AED', textAlign:'center'},
-  encD: {backgroundColor:'#dbeafe'},
-  encDTxt: {fontSize:13, fontWeight:'800', color:'#1e40af'},
-  encDSub: {fontSize:9, color:'#3b82f6', marginTop:1},
-  subEncCell: {paddingVertical:5, paddingHorizontal:3, alignItems:'center', justifyContent:'center', borderRightWidth:1, borderRightColor:'#e2e8f0'},
-  subEncTxt: {fontSize:9, color:'#A89FC0', textAlign:'center', fontWeight:'600'},
-  celdaNombre: {paddingVertical:10, paddingLeft:10, paddingRight:4, fontSize:12, fontWeight:'500', color:'#F5F0FF', textAlignVertical:'center'},
-  celdaView: {paddingVertical:10, paddingHorizontal:2, alignItems:'center', justifyContent:'center', borderRightWidth:1, borderRightColor:'#f1f5f9'},
-  notaTxt: {fontSize:12, fontWeight:'600', color:'#059669'},
-  notaVacia: {color:'#d1d5db', fontWeight:'400'},
-  notaRoja: {color:'#ef4444', fontWeight:'700'},
-  promTxt: {fontSize:13, fontWeight:'700', color:'#0369a1'},
-  faltasTxt: {fontSize:12, fontWeight:'700', color:'#5A5070'},
-  finalTxt: {fontSize:14, fontWeight:'800', color:'#059669'},
-  exportBtn: {
-    backgroundColor: '#7C3AED', marginHorizontal: 12, marginVertical: 6,
-    paddingVertical: 10, borderRadius: 8, alignItems: 'center',
-  },
-  exportTxt: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  resumenBar: {backgroundColor:'#7C3AED', paddingVertical:8, alignItems:'center'},
-  resumenTxt: {color:'#9F67F5', fontSize:11},
+  flex:        { flex: 1, backgroundColor: '#F8FAFC' },
+  center:      { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8FAFC' },
+  loadingText: { marginTop: 12, color: '#475569' },
+
+  headerBar:    { backgroundColor: '#2D5FA8', paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 10, overflow: 'hidden' },
+  backBtn:      { width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
+  headerSubtitle:{ color: 'rgba(255,255,255,0.65)', fontSize: 10, fontWeight: '600', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 1 },
+  headerMateria:{ color: '#FFFFFF', fontWeight: '700', fontSize: 16 },
+  headerPeriodo:{ color: 'rgba(255,255,255,0.75)', fontSize: 14, fontWeight: '600' },
+
+  // Tabla — texto siempre oscuro sobre blanco/gris claro
+  fila:    { flexDirection: 'row', alignItems: 'stretch', borderBottomWidth: 0.5, borderBottomColor: '#E2E8F0', backgroundColor: '#FFFFFF' },
+  filaPar: { backgroundColor: '#F8FAFC' },
+
+  // Headers de tabla
+  encCell:   { paddingVertical: 9, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center', backgroundColor: '#EFF6FF', borderRightWidth: 1, borderRightColor: '#BFDBFE' },
+  encTxt:    { fontSize: 12, fontWeight: '700', color: '#1E40AF', textAlign: 'center' },     // azul oscuro — visible
+  encD:      { backgroundColor: '#DBEAFE' },
+  encDTxt:   { fontSize: 13, fontWeight: '800', color: '#1E40AF' },                           // azul oscuro — visible
+  encDSub:   { fontSize: 9, color: '#3B82F6', marginTop: 1 },
+
+  subEncCell: { paddingVertical: 5, paddingHorizontal: 3, alignItems: 'center', justifyContent: 'center', borderRightWidth: 1, borderRightColor: '#E2E8F0', backgroundColor: '#F8FAFC' },
+  subEncTxt:  { fontSize: 9, color: '#334155', textAlign: 'center', fontWeight: '600' },      // gris oscuro — visible
+
+  // Celdas de datos — texto SIEMPRE oscuro
+  celdaNombre: { paddingVertical: 11, paddingLeft: 10, paddingRight: 4, fontSize: 12, fontWeight: '500', color: '#0F172A', textAlignVertical: 'center' },
+  celdaView:   { paddingVertical: 11, paddingHorizontal: 2, alignItems: 'center', justifyContent: 'center', borderRightWidth: 1, borderRightColor: '#F1F5F9' },
+  notaTxt:     { fontSize: 12, fontWeight: '600', color: '#059669' },
+  notaVacia:   { color: '#CBD5E1', fontWeight: '400' },
+  notaRoja:    { color: '#DC2626', fontWeight: '700' },
+  promTxt:     { fontSize: 13, fontWeight: '700', color: '#0369A1' },
+  faltasTxt:   { fontSize: 12, fontWeight: '700', color: '#64748B' },
+  finalTxt:    { fontSize: 14, fontWeight: '800', color: '#059669' },
+
+  exportBtn: { backgroundColor: '#2D5FA8', marginHorizontal: 12, marginVertical: 8, paddingVertical: 12, borderRadius: 10, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 },
+  exportTxt: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
+
+  resumenBar: { backgroundColor: '#2D5FA8', paddingVertical: 10, alignItems: 'center' },
+  resumenTxt: { color: 'rgba(255,255,255,0.75)', fontSize: 11 },
 });

@@ -30,7 +30,6 @@ import RectorScreen from './screens/RectorScreen';
 import ReporteScreen from './screens/ReporteScreen';
 import ConfigurarDesempenosScreen from './screens/ConfigurarDesempenosScreen';
 import CalificarIAScreen from './screens/CalificarIAScreen';
-import RiesgoScreen from './screens/RiesgoScreen';
 import ListadoEstudiantesScreen from './screens/ListadoEstudiantesScreen';
 import RetirosScreen from './screens/RetirosScreen';
 import MateriaDetalleScreen from './screens/MateriaDetalleScreen';
@@ -150,7 +149,6 @@ function App() {
                 <Stack.Screen name="Reporte" component={ReporteScreen} options={{ title: 'Reporte a padres', headerBackVisible: true }} />
                 <Stack.Screen name="CalificarIA" component={CalificarIAScreen} options={{ title: 'Calificar con IA', headerBackVisible: true, headerStyle: { backgroundColor: '#7c3aed' }, headerTintColor: '#fff', headerTitleStyle: { fontWeight: '700' } }} />
                 <Stack.Screen name="ConfigurarDesempenos" component={ConfigurarDesempenosScreen} options={{ title: 'Configurar Desempeños', headerBackVisible: true }} />
-                <Stack.Screen name="Riesgo" component={RiesgoScreen} options={{ title: 'Riesgo Académico', headerBackVisible: true, headerStyle: { backgroundColor: '#7c3aed' }, headerTintColor: '#fff', headerTitleStyle: { fontWeight: '700' } }} />
                 <Stack.Screen name="Listado" component={ListadoEstudiantesScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="Retiros" component={RetirosScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="MateriaDetalle" component={MateriaDetalleScreen} options={{ headerShown: false }} />
@@ -174,7 +172,6 @@ function App() {
                 <Stack.Screen name="CalificarIA" component={CalificarIAScreen} options={{ title: 'Calificar con IA', headerBackVisible: true, headerStyle: { backgroundColor: '#7c3aed' }, headerTintColor: '#fff', headerTitleStyle: { fontWeight: '700' } }} />
                 <Stack.Screen name="ConfigurarDesempenos" component={ConfigurarDesempenosScreen} options={{ title: 'Configurar Desempeños', headerBackVisible: true }} />
                 <Stack.Screen name="Rector" component={RectorScreen} options={{ title: 'Panel Rector', headerBackVisible: false }} />
-                <Stack.Screen name="Riesgo" component={RiesgoScreen} options={{ title: 'Riesgo Académico', headerBackVisible: true, headerStyle: { backgroundColor: '#7c3aed' }, headerTintColor: '#fff', headerTitleStyle: { fontWeight: '700' } }} />
                 <Stack.Screen name="Listado" component={ListadoEstudiantesScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="Retiros" component={RetirosScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="MateriaDetalle" component={MateriaDetalleScreen} options={{ headerShown: false }} />
