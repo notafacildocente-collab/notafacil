@@ -259,6 +259,20 @@ export default function RectorScreen({ navigation }: any) {
           </View>
         )}
 
+        {/* ── Calendario Académico ─────────────────────────────────────────── */}
+        <TouchableOpacity
+          style={styles.calendarioBtn}
+          onPress={() => navigation.navigate('Calendario' as any)}
+          activeOpacity={0.82}
+        >
+          <Ionicons name="calendar-outline" size={22} color="#fff" />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.calendarioBtnTitulo}>Calendario Académico</Text>
+            <Text style={styles.calendarioBtnDesc}>Gestiona eventos y notifica a toda la institución</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.7)" />
+        </TouchableOpacity>
+
         {/* ── Configuración de Institución ──────────────────────────────────── */}
         <Text style={styles.seccionTitulo}>Configuración de Institución</Text>
         <View style={styles.card}>
@@ -452,6 +466,15 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 12, color: '#64748B', marginTop: 2, fontWeight: '600' },
   statNumActivo: { fontSize: 14, fontWeight: '800', color: '#FFFFFF', textAlign: 'center', lineHeight: 20 },
   statLabelActivo: { fontSize: 11, color: '#93C5FD', marginTop: 4, fontWeight: '600' },
+
+  // ── Calendario ────────────────────────────────────────────────────────────
+  calendarioBtn: {
+    backgroundColor: '#1E3A5F', borderRadius: 14, padding: 16, flexDirection: 'row',
+    alignItems: 'center', gap: 14, marginBottom: 16,
+    shadowColor: '#1E3A5F', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4,
+  },
+  calendarioBtnTitulo: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  calendarioBtnDesc:   { color: 'rgba(255,255,255,0.65)', fontSize: 12, marginTop: 2 },
 
   // ── Sección título ────────────────────────────────────────────────────────
   seccionTitulo: {

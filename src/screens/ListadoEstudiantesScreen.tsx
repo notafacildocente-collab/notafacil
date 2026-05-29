@@ -603,6 +603,15 @@ export default function ListadoEstudiantesScreen() {
                 <Text style={[styles.tdBase, { flex: 1, fontWeight: '700', color: '#0F172A' }]} numberOfLines={1}>
                   {((est.apellido || '') + ' ' + (est.nombre || '')).toUpperCase().trim()}
                 </Text>
+                <TouchableOpacity
+                  style={styles.obsBtn}
+                  onPress={() => (navigation as any).navigate('Observaciones', {
+                    estudianteId: est.estudianteId,
+                    estudianteNombre: `${est.apellido || ''} ${est.nombre || ''}`.trim(),
+                  })}
+                >
+                  <Ionicons name="document-text-outline" size={16} color="#2D5FA8" />
+                </TouchableOpacity>
               </View>
             ))
           )}
@@ -650,6 +659,7 @@ const styles = StyleSheet.create({
 
   // Filas — texto SIEMPRE oscuro y visible
   fila:      { flexDirection: 'row', paddingVertical: 11, paddingHorizontal: 8, alignItems: 'center', borderBottomWidth: 0.5, borderBottomColor: '#E2E8F0' },
+  obsBtn:    { padding: 6, marginLeft: 4 },
   filaPar:   { backgroundColor: '#FFFFFF' },
   filaImpar: { backgroundColor: '#F8FAFC' },
   tdBase:    { fontSize: 13, paddingHorizontal: 4, color: '#0F172A' },  // negro pizarra — SIEMPRE visible

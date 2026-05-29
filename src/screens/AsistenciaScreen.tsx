@@ -6,6 +6,9 @@ import {
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
+import { offlineQueue } from '../services/offlineQueue';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import OfflineBanner from '../components/OfflineBanner';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -63,6 +66,7 @@ export default function AsistenciaScreen() {
   const navigation = useNavigation();
   const { asignacionId, materiaNombre, periodoNumero } = (route.params || {}) as any;
 
+  const { isOnline, pendingCount, isSyncing, syncNow, refreshPending } = useNetworkStatus();
   const [fechaISO, setFechaISO] = useState(toISO(new Date()));
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [registros, setRegistros] = useState<Record<string, EstadoAsistencia>>({});
@@ -157,9 +161,19 @@ export default function AsistenciaScreen() {
         estudianteId: e.id,
         estado: registros[e.id] || 'PRESENTE',
       }));
+      const payload = { asignacionId, fecha: fechaISO, registros: listaRegistros };
+
+      if (!isOnline) {
+        await offlineQueue.add({ tipo: 'ASISTENCIA', method: 'POST', url: '/api/asistencia/guardar', body: payload });
+        await refreshPending();
+        setYaGuardado(true);
+        Alert.alert('📥 Guardado sin internet', 'La asistencia se sincronizará automáticamente al reconectarte.');
+        return;
+      }
+
       const res = await apiFetch('/api/asistencia/guardar', {
         method: 'POST',
-        body: JSON.stringify({ asignacionId, fecha: fechaISO, registros: listaRegistros }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -212,6 +226,7 @@ export default function AsistenciaScreen() {
 
   return (
     <View style={styles.flex}>
+      <OfflineBanner isOnline={isOnline} pendingCount={pendingCount} isSyncing={isSyncing} onSync={syncNow} />
 
       {/* ── Barra de contexto (materia + periodo) ── */}
       <View style={styles.headerBar}>

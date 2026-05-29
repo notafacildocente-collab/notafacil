@@ -323,6 +323,14 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
                   <Ionicons name="chevron-forward" size={18} color="#7C3AED" />
                 </TouchableOpacity>
               )}
+              <TouchableOpacity
+                style={styles.botonCalendario}
+                onPress={() => (navigation as any).navigate('Calendario')}
+              >
+                <Ionicons name="calendar-outline" size={20} color="#2D5FA8" />
+                <Text style={styles.botonCalendarioTexto}>Calendario Académico</Text>
+                <Ionicons name="chevron-forward" size={18} color="#2D5FA8" />
+              </TouchableOpacity>
             </View>
           )}
           renderItem={({ item }) => (
@@ -449,6 +457,15 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#A5F3FC',
   },
   botonListadoTexto: { color: '#0E7490', fontWeight: '700', fontSize: 15, flex: 1 },
+
+  botonCalendario: {
+    backgroundColor: '#EFF6FF', borderRadius: 14,
+    paddingVertical: 16, paddingHorizontal: 20,
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    marginTop: 10,
+    borderWidth: 1, borderColor: '#BFDBFE',
+  },
+  botonCalendarioTexto: { color: '#1D4ED8', fontWeight: '700', fontSize: 15, flex: 1 },
 
   botonRetiros: {
     backgroundColor: '#FEF2F2', borderRadius: 14,

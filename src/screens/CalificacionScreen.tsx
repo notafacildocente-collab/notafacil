@@ -8,6 +8,9 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { apiFetch } from '../services/api';
+import { offlineQueue } from '../services/offlineQueue';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import OfflineBanner from '../components/OfflineBanner';
 
 interface Estudiante {
   id: string;
@@ -45,6 +48,7 @@ export default function CalificacionScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   const { asignacionId, periodoId, materiaNombre, periodoNumero, materiaId } = (route.params || {}) as any;
+  const { isOnline, pendingCount, isSyncing, syncNow, refreshPending } = useNetworkStatus();
 
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [desempenos, setDesempenos] = useState<Desempeno[]>([]);
@@ -144,17 +148,36 @@ export default function CalificacionScreen() {
     if (valor > 5.0) { Alert.alert('Nota muy alta', 'La nota máxima es 5.0'); return; }
     try {
       setSaving(true);
-      const res = await apiFetch('/api/notas', {
-        method: 'POST',
-        body: JSON.stringify({
-          asignacionId,
-          desempenoId: desempenoSeleccionado.id,
+      const payload = {
+        asignacionId,
+        desempenoId: desempenoSeleccionado.id,
+        estudianteId: estudianteActivo.id,
+        valor,
+        descripcion: descripcionInput.trim() || undefined,
+        creadoOffline: !isOnline,
+      };
+
+      if (!isOnline) {
+        // Guardar en cola offline — ID temporal para mostrar en UI
+        const tempId = `offline-${Date.now()}`;
+        const notaLocal: Nota = {
+          id: tempId,
           estudianteId: estudianteActivo.id,
+          desempenoId: desempenoSeleccionado.id,
+          asignacionId,
           valor,
-          descripcion: descripcionInput.trim() || undefined,
-          creadoOffline: false,
-        }),
-      });
+          descripcion: descripcionInput.trim(),
+          createdAt: new Date().toISOString(),
+        };
+        setNotas((prev) => [notaLocal, ...prev]);
+        await offlineQueue.add({ tipo: 'NOTA', method: 'POST', url: '/api/notas', body: payload });
+        await refreshPending();
+        setValorInput(''); setDescripcionInput(''); setSugerenciaIA(null); setImagenesIA([]); setModalVisible(false);
+        Alert.alert('📥 Guardado sin internet', 'La nota se sincronizará automáticamente cuando recuperes la conexión.');
+        return;
+      }
+
+      const res = await apiFetch('/api/notas', { method: 'POST', body: JSON.stringify(payload) });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error((err as any).message || 'Error al guardar');
@@ -366,6 +389,7 @@ export default function CalificacionScreen() {
   return (
     <View style={styles.flex}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <OfflineBanner isOnline={isOnline} pendingCount={pendingCount} isSyncing={isSyncing} onSync={syncNow} />
 
       {/* ── Header claro ── */}
       <View style={styles.header}>

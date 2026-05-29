@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import * as SecureStore from 'expo-secure-store';
+import * as Notifications from 'expo-notifications';
 
 import store, { persistor } from './store/redux';
 import { initializeDatabase } from './services/watermelonDB';
@@ -34,6 +35,8 @@ import ListadoEstudiantesScreen from './screens/ListadoEstudiantesScreen';
 import RetirosScreen from './screens/RetirosScreen';
 import MateriaDetalleScreen from './screens/MateriaDetalleScreen';
 import CarnetEstudiantesScreen from './screens/CarnetEstudiantesScreen';
+import ObservacionesScreen from './screens/ObservacionesScreen';
+import CalendarioScreen from './screens/CalendarioScreen';
 
 // ── Pantallas de estudiante ───────────────────────────────────────────────────
 import EstudianteScreen from './screens/EstudianteScreen';
@@ -77,6 +80,42 @@ function App() {
   useEffect(() => {
     registrarCerrarSesion(logout);
   }, []);
+
+  // ── Registrar push token al iniciar sesión ──────────────────────────────────
+  useEffect(() => {
+    if (!isSignedIn) return;
+    const registrarPushToken = async () => {
+      try {
+        const { status: existing } = await Notifications.getPermissionsAsync();
+        let finalStatus = existing;
+        if (existing !== 'granted') {
+          const { status } = await Notifications.requestPermissionsAsync();
+          finalStatus = status;
+        }
+        if (finalStatus !== 'granted') return;
+        const tokenData = await Notifications.getExpoPushTokenAsync({
+          projectId: 'c13ff982-c4aa-48e7-adac-1c3c212a5584',
+        });
+        const token = tokenData.data;
+        if (token) {
+          const { apiFetch: fetch2 } = await import('./services/api');
+          await fetch2('/api/calendario/push-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token }),
+          });
+        }
+        if (Platform.OS === 'android') {
+          Notifications.setNotificationChannelAsync('default', {
+            name: 'default',
+            importance: Notifications.AndroidImportance.MAX,
+            vibrationPattern: [0, 250, 250, 250],
+          });
+        }
+      } catch { /* best effort */ }
+    };
+    registrarPushToken();
+  }, [isSignedIn]);
 
   useEffect(() => {
     const bootstrapAsync = async () => {
@@ -130,6 +169,7 @@ function App() {
                 <Stack.Screen name="EstudianteHorario" component={EstudianteHorarioScreen} options={{ title: 'Mi Horario', headerBackVisible: true }} />
                 <Stack.Screen name="EstudianteAsistencia" component={EstudianteAsistenciaScreen} options={{ title: 'Mi Asistencia', headerBackVisible: true }} />
                 <Stack.Screen name="EstudianteBoletin" component={EstudianteBoletinScreen} options={{ title: 'Boletín', headerBackVisible: true }} />
+                <Stack.Screen name="Calendario" component={CalendarioScreen} options={{ headerShown: false }} />
               </>
 
             ) : esRector ? (
@@ -153,6 +193,8 @@ function App() {
                 <Stack.Screen name="Retiros" component={RetirosScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="MateriaDetalle" component={MateriaDetalleScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="CarnetEstudiantes" component={CarnetEstudiantesScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="Observaciones" component={ObservacionesScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="Calendario" component={CalendarioScreen} options={{ headerShown: false }} />
               </>
 
             ) : (
@@ -176,6 +218,8 @@ function App() {
                 <Stack.Screen name="Retiros" component={RetirosScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="MateriaDetalle" component={MateriaDetalleScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="CarnetEstudiantes" component={CarnetEstudiantesScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="Observaciones" component={ObservacionesScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="Calendario" component={CalendarioScreen} options={{ headerShown: false }} />
               </>
             )}
 
