@@ -36,7 +36,6 @@ export default function HorarioScreen() {
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={20} color={Colors.text1} />
         </TouchableOpacity>
-        <Text style={styles.headerLabel}>DOCENTE</Text>
         <Text style={styles.headerTitle}>Mi Horario</Text>
         <Text style={styles.headerSub}>{DIAS[diaActivo]}</Text>
       </View>
@@ -94,7 +93,7 @@ export default function HorarioScreen() {
 const styles = StyleSheet.create({
   flex:           { flex: 1, backgroundColor: Colors.bg },
   header:         { backgroundColor: Colors.surface, paddingTop: 52, paddingBottom: Spacing.lg, paddingHorizontal: Spacing.xl, borderBottomWidth: 0.5, borderBottomColor: Colors.borderSoft, overflow: 'hidden' },
-  backBtn:        { position: 'absolute', top: 52, left: Spacing.xl, width: 34, height: 34, borderRadius: 17, backgroundColor: Colors.card, borderWidth: 0.5, borderColor: Colors.borderSoft, alignItems: 'center', justifyContent: 'center' },
+  backBtn:        { position: 'absolute', top: 14, left: Spacing.xl, width: 34, height: 34, borderRadius: 17, backgroundColor: Colors.card, borderWidth: 0.5, borderColor: Colors.borderSoft, alignItems: 'center', justifyContent: 'center' },
   headerTopLine:  { position: 'absolute', top: 0, left: 0, right: 0, height: 2, backgroundColor: Colors.accent },
   headerLabel:    { fontSize: Typography.xs, color: Colors.accent2, letterSpacing: Typography.widest, marginBottom: 2 },
   headerTitle:    { fontSize: Typography.xxl, fontWeight: Typography.black, color: Colors.text1 },
