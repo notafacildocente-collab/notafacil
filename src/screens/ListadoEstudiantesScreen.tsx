@@ -575,7 +575,7 @@ export default function ListadoEstudiantesScreen() {
           <>
             <Ionicons name="grid-outline" size={18} color="#065F46" />
             <Text style={styles.planillaBtnTxt}>
-              <Text style={{ fontWeight: '800' }}>Planilla en Blanco</Text> — cuadrícula por desempeños para llenar a mano
+              <Text style={{ fontWeight: '800' }}>Planilla en Blanco</Text> — Cuadrícula por desempeños para calificar a mano
             </Text>
           </>
         )}
