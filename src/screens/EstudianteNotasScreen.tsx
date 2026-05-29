@@ -46,7 +46,9 @@ export default function EstudianteNotasScreen({ navigation }: any) {
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={20} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitulo}>Mis Notas</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.headerTitulo}>Mis Notas</Text>
+          </View>
         </View>
         <View style={styles.center}>
           <ActivityIndicator size="large" color={Colors.primary} />
@@ -64,8 +66,10 @@ export default function EstudianteNotasScreen({ navigation }: any) {
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={20} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitulo}>Mis Notas</Text>
-        <Text style={styles.headerSub}>Período actual</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.headerTitulo}>Mis Notas</Text>
+          <Text style={styles.headerSub}>Período actual</Text>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.lista} showsVerticalScrollIndicator={false}>
@@ -155,17 +159,16 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl },
 
   header: {
-    backgroundColor: Colors.primary, paddingTop: 52, paddingBottom: 18,
-    paddingHorizontal: Spacing.xl,
+    backgroundColor: '#2D5FA8', paddingTop: 52, paddingBottom: 18,
+    paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center',
   },
   backBtn: {
-    position: 'absolute', top: 52, left: Spacing.lg,
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    width: 36, height: 36, borderRadius: 18, marginRight: 12,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center', justifyContent: 'center',
   },
-  headerTitulo: { color: '#fff', fontSize: Typography.xl, fontWeight: Typography.extrabold, textAlign: 'center' },
-  headerSub:    { color: 'rgba(255,255,255,0.65)', fontSize: Typography.xs, textAlign: 'center', marginTop: 4 },
+  headerTitulo: { color: '#FFFFFF', fontSize: 20, fontWeight: '800' },
+  headerSub:    { color: 'rgba(255,255,255,0.65)', fontSize: 12, marginTop: 2 },
 
   loadingText: { color: Colors.text3, marginTop: Spacing.md },
   emptyText:   { color: Colors.text3, fontSize: Typography.base, marginTop: Spacing.md, textAlign: 'center' },

@@ -226,15 +226,15 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl },
 
   header: {
-    backgroundColor: Colors.primary, paddingTop: 52, paddingBottom: 18,
-    paddingHorizontal: Spacing.lg, flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: '#2D5FA8', paddingTop: 52, paddingBottom: 18,
+    paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center',
   },
   backBtn: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    width: 36, height: 36, borderRadius: 18, marginRight: 12,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center', justifyContent: 'center',
   },
-  headerTitulo: { color: '#fff', fontSize: Typography.lg, fontWeight: Typography.extrabold },
+  headerTitulo: { color: '#FFFFFF', fontSize: 20, fontWeight: '800' },
 
   body: { padding: Spacing.lg },
   loadingTxt: { color: Colors.text3, marginTop: Spacing.md },
