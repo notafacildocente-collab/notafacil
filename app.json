@@ -23,7 +23,8 @@
         "android.permission.INTERNET",
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE"
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "plugins": [
@@ -47,9 +48,9 @@
     "scheme": "notafacil",
     "extra": {
       "eas": {
-        "projectId": "c13ff982-c4aa-48e7-adac-1c3c212a5584"
+        "projectId": "8fbc1d23-985d-4969-90cf-bdab0e95792e"
       }
     },
-    "owner": "sisas"
+    "owner": "lanota"
   }
 }

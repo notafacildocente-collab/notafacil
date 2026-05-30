@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { AppState, Platform } from 'react-native';
+import React, { useEffect, Suspense } from 'react';
+import { AppState, Platform, View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Provider } from 'react-redux';
@@ -8,7 +8,6 @@ import * as SecureStore from 'expo-secure-store';
 import * as Notifications from 'expo-notifications';
 
 import store, { persistor } from './store/redux';
-import { initializeDatabase } from './services/watermelonDB';
 import { syncService } from './services/sync';
 import { registrarCerrarSesion } from './services/auth';
 
@@ -17,33 +16,33 @@ import LoginScreen from './screens/LoginScreen';
 import SplashScreen from './screens/SplashScreen';
 import RecuperarPasswordScreen from './screens/RecuperarPasswordScreen';
 
-// ── Pantallas de profesor / rector ───────────────────────────────────────────
+// ── Pantallas base (cargan siempre) ──────────────────────────────────────────
 import SeleccionarMateriaScreen from './screens/SeleccionarMateriaScreen';
-import SeleccionarPeriodoScreen from './screens/SeleccionarPeriodoScreen';
-import CalificacionScreen from './screens/CalificacionScreen';
-import AsistenciaScreen from './screens/AsistenciaScreen';
-import PlanillaScreen from './screens/PlanillaScreen';
-import HorarioScreen from './screens/HorarioScreen';
-import AsignacionesProfesorScreen from './screens/AsignacionesProfesorScreen';
-import CambiarPasswordScreen from './screens/CambiarPasswordScreen';
-import BoletinScreen from './screens/BoletinScreen';
 import RectorScreen from './screens/RectorScreen';
-import ReporteScreen from './screens/ReporteScreen';
-import ConfigurarDesempenosScreen from './screens/ConfigurarDesempenosScreen';
-import CalificarIAScreen from './screens/CalificarIAScreen';
-import ListadoEstudiantesScreen from './screens/ListadoEstudiantesScreen';
-import RetirosScreen from './screens/RetirosScreen';
-import MateriaDetalleScreen from './screens/MateriaDetalleScreen';
-import CarnetEstudiantesScreen from './screens/CarnetEstudiantesScreen';
-import ObservacionesScreen from './screens/ObservacionesScreen';
-import CalendarioScreen from './screens/CalendarioScreen';
-
-// ── Pantallas de estudiante ───────────────────────────────────────────────────
 import EstudianteScreen from './screens/EstudianteScreen';
-import EstudianteNotasScreen from './screens/EstudianteNotasScreen';
-import EstudianteHorarioScreen from './screens/EstudianteHorarioScreen';
-import EstudianteAsistenciaScreen from './screens/EstudianteAsistenciaScreen';
-import EstudianteBoletinScreen from './screens/EstudianteBoletinScreen';
+
+// ── Pantallas lazy (cargan solo cuando se navega a ellas) ────────────────────
+const SeleccionarPeriodoScreen = React.lazy(() => import('./screens/SeleccionarPeriodoScreen'));
+const CalificacionScreen       = React.lazy(() => import('./screens/CalificacionScreen'));
+const AsistenciaScreen         = React.lazy(() => import('./screens/AsistenciaScreen'));
+const PlanillaScreen           = React.lazy(() => import('./screens/PlanillaScreen'));
+const HorarioScreen            = React.lazy(() => import('./screens/HorarioScreen'));
+const AsignacionesProfesorScreen = React.lazy(() => import('./screens/AsignacionesProfesorScreen'));
+const CambiarPasswordScreen    = React.lazy(() => import('./screens/CambiarPasswordScreen'));
+const BoletinScreen            = React.lazy(() => import('./screens/BoletinScreen'));
+const ReporteScreen            = React.lazy(() => import('./screens/ReporteScreen'));
+const ConfigurarDesempenosScreen = React.lazy(() => import('./screens/ConfigurarDesempenosScreen'));
+const CalificarIAScreen        = React.lazy(() => import('./screens/CalificarIAScreen'));
+const ListadoEstudiantesScreen = React.lazy(() => import('./screens/ListadoEstudiantesScreen'));
+const RetirosScreen            = React.lazy(() => import('./screens/RetirosScreen'));
+const MateriaDetalleScreen     = React.lazy(() => import('./screens/MateriaDetalleScreen'));
+const CarnetEstudiantesScreen  = React.lazy(() => import('./screens/CarnetEstudiantesScreen'));
+const ObservacionesScreen      = React.lazy(() => import('./screens/ObservacionesScreen'));
+const CalendarioScreen         = React.lazy(() => import('./screens/CalendarioScreen'));
+const EstudianteNotasScreen    = React.lazy(() => import('./screens/EstudianteNotasScreen'));
+const EstudianteHorarioScreen  = React.lazy(() => import('./screens/EstudianteHorarioScreen'));
+const EstudianteAsistenciaScreen = React.lazy(() => import('./screens/EstudianteAsistenciaScreen'));
+const EstudianteBoletinScreen  = React.lazy(() => import('./screens/EstudianteBoletinScreen'));
 
 const Stack = createNativeStackNavigator();
 
@@ -120,11 +119,9 @@ function App() {
   useEffect(() => {
     const bootstrapAsync = async () => {
       try {
-        // Despertar el servidor (Render duerme tras 15 min sin uso)
-        fetch('https://notafacil-backend-539h.onrender.com/api/auth/config')
-          .catch(() => {/* silent wake-up ping */});
+        // Despertar Render (duerme tras 15 min sin uso) — fire and forget
+        fetch('https://notafacil-backend-539h.onrender.com/api/auth/config').catch(() => {});
 
-        await initializeDatabase();
         await checkToken();
         const token = await SecureStore.getItemAsync('accessToken');
         if (token) syncService.startBackgroundSync();
@@ -154,6 +151,7 @@ function App() {
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <NavigationContainer>
+          <Suspense fallback={<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><ActivityIndicator size="large" color="#2D5FA8" /></View>}>
           <Stack.Navigator screenOptions={{ headerShown: true, headerTitleAlign: 'center' }}>
 
             {/* ── Sin sesión ── */}
@@ -228,6 +226,7 @@ function App() {
             )}
 
           </Stack.Navigator>
+          </Suspense>
         </NavigationContainer>
       </PersistGate>
     </Provider>

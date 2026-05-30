@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
   Modal, TextInput, Alert, ActivityIndicator,
@@ -64,6 +64,8 @@ export default function CalificacionScreen() {
   const [descripcionSugerida, setDescripcionSugerida] = useState<string | null>(null);
   const [loadingDescripcion, setLoadingDescripcion] = useState(false);
   const [busquedaEst, setBusquedaEst] = useState('');
+  const [busquedaDebounced, setBusquedaDebounced] = useState('');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [calificandoIA, setCalificandoIA] = useState(false);
   const [sugerenciaIA, setSugerenciaIA] = useState<SugerenciaIA | null>(null);
   const [imagenesIA, setImagenesIA] = useState<Array<{base64: string; mimeType: string}>>([]);
@@ -507,8 +509,8 @@ export default function CalificacionScreen() {
     }
   };
 
-  const notaFinal = calcularNotaFinal();
-  const aprobado = notaFinal >= 3.0;
+  const notaFinal = useMemo(() => calcularNotaFinal(), [notas, desempenos]);
+  const aprobado  = notaFinal >= 3.0;
   const colorFinal = notaFinal === 0 ? '#94A3B8' : aprobado ? '#10b981' : '#ef4444';
 
   return (
@@ -542,10 +544,14 @@ export default function CalificacionScreen() {
           placeholder="Buscar estudiante..."
           placeholderTextColor="#94A3B8"
           value={busquedaEst}
-          onChangeText={setBusquedaEst}
+          onChangeText={(t) => {
+            setBusquedaEst(t);
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+            debounceRef.current = setTimeout(() => setBusquedaDebounced(t), 150);
+          }}
         />
         {busquedaEst.length > 0 && (
-          <TouchableOpacity onPress={() => setBusquedaEst('')} style={{ padding: 4 }}>
+          <TouchableOpacity onPress={() => { setBusquedaEst(''); setBusquedaDebounced(''); }} style={{ padding: 4 }}>
             <Ionicons name="close-circle" size={18} color="#94A3B8" />
           </TouchableOpacity>
         )}
@@ -560,8 +566,8 @@ export default function CalificacionScreen() {
       >
         {estudiantes
           .filter((e) =>
-            busquedaEst.trim() === '' ||
-            `${e.apellido} ${e.nombre}`.toLowerCase().includes(busquedaEst.toLowerCase()),
+            busquedaDebounced.trim() === '' ||
+            `${e.apellido} ${e.nombre}`.toLowerCase().includes(busquedaDebounced.toLowerCase()),
           )
           .map((est) => {
             const activo = est.id === estudianteActivo?.id;

@@ -101,24 +101,37 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
       const nombreGuardado = await SecureStore.getItemAsync('nombre');
       if (nombreGuardado) setNombre(nombreGuardado);
 
-      const response = await apiFetch('/api/notas/mis-materias');
-      if (response.ok) {
-        const data = await response.json();
+      // Cache 2 minutos — las materias cambian poco durante la jornada
+      const { apiCache, TTL } = await import('../services/apiCache');
+      const cached = apiCache.get('/api/notas/mis-materias');
+      let data: any;
+      if (cached) {
+        data = cached;
+      } else {
+        const response = await apiFetch('/api/notas/mis-materias');
+        if (!response.ok) throw new Error('Error');
+        data = await response.json();
+        apiCache.set('/api/notas/mis-materias', data, TTL.medium);
+      }
+      if (data) {
         setMaterias(data);
         if (data.length > 0) {
-          const resPer = await apiFetch('/api/notas/periodos');
-          if (resPer.ok) {
-            const periodos = await resPer.json();
-            if (periodos.length > 0) {
-              const periodo = periodos.find((p: any) => !p.cerrado) || periodos[periodos.length - 1];
-              setPeriodoInfo({ id: periodo.id, numero: periodo.numero });
-              const resAsig = await apiFetch(`/api/notas/asignacion?materiaId=${data[0].id}&periodoId=${periodo.id}`);
-              if (resAsig.ok) { const asig = await resAsig.json(); setCursoId(asig.cursoId); }
+          // Cache períodos 2 minutos — no cambian durante la jornada
+          let periodos = apiCache.get('/api/notas/periodos');
+          if (!periodos) {
+            const resPer = await apiFetch('/api/notas/periodos');
+            if (resPer.ok) {
+              periodos = await resPer.json();
+              apiCache.set('/api/notas/periodos', periodos, TTL.medium);
             }
           }
+          if (periodos?.length > 0) {
+            const periodo = periodos.find((p: any) => !p.cerrado) || periodos[periodos.length - 1];
+            setPeriodoInfo({ id: periodo.id, numero: periodo.numero });
+            const resAsig = await apiFetch(`/api/notas/asignacion?materiaId=${data[0].id}&periodoId=${periodo.id}`);
+            if (resAsig.ok) { const asig = await resAsig.json(); setCursoId(asig.cursoId); }
+          }
         }
-      } else {
-        Alert.alert('Error', 'No se pudieron cargar las materias');
       }
     } catch (error: any) {
       if (error.message !== 'Sesión vencida') Alert.alert('Error', 'No se pudo conectar al servidor');
