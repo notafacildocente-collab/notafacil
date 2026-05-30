@@ -83,6 +83,7 @@ export default function CalificacionScreen() {
     seleccionada: boolean;           // checkbox del profe
   }>>([]);
   const [guardandoScan, setGuardandoScan] = useState(false);
+  const [descripcionScan, setDescripcionScan] = useState('');
 
   useEffect(() => {
     const cargarDatosIniciales = async () => {
@@ -493,6 +494,7 @@ export default function CalificacionScreen() {
               desempenoId: e.desempenoId,
               estudianteId: e.estudianteId,
               valor: e.valor,
+              descripcion: descripcionScan.trim() || undefined,
               creadoOffline: false,
             }),
           });
@@ -522,12 +524,12 @@ export default function CalificacionScreen() {
           [
             {
               text: 'No', style: 'cancel',
-              onPress: () => { if (fail === 0) { setScannerVisible(false); setExtraccionesIA([]); } },
+              onPress: () => { if (fail === 0) { setScannerVisible(false); setExtraccionesIA([]); setDescripcionScan(''); } },
             },
             {
               text: `Notificar (${waLinksReprobados.length})`,
               onPress: async () => {
-                if (fail === 0) { setScannerVisible(false); setExtraccionesIA([]); }
+                if (fail === 0) { setScannerVisible(false); setExtraccionesIA([]); setDescripcionScan(''); }
                 // Abrir WhatsApp para cada padre de reprobado con una pequeña pausa entre cada uno
                 for (const { waLink } of waLinksReprobados) {
                   await Linking.openURL(waLink).catch(() => {});
@@ -541,7 +543,7 @@ export default function CalificacionScreen() {
         Alert.alert(
           ok > 0 ? '✓ Notas guardadas' : 'Sin cambios',
           resMsg,
-          [{ text: 'Listo', onPress: () => { if (fail === 0) { setScannerVisible(false); setExtraccionesIA([]); } } }],
+          [{ text: 'Listo', onPress: () => { if (fail === 0) { setScannerVisible(false); setExtraccionesIA([]); setDescripcionScan(''); } } }],
         );
       }
     } finally {
@@ -926,7 +928,7 @@ export default function CalificacionScreen() {
           <View style={{ backgroundColor: '#2D5FA8', paddingTop: 52, paddingBottom: 16, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <TouchableOpacity
               style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }}
-              onPress={() => { setScannerVisible(false); setExtraccionesIA([]); }}
+              onPress={() => { setScannerVisible(false); setExtraccionesIA([]); setDescripcionScan(''); }}
             >
               <Ionicons name="close" size={20} color="#fff" />
             </TouchableOpacity>
@@ -1039,9 +1041,30 @@ export default function CalificacionScreen() {
             </ScrollView>
           )}
 
+          {/* Campo de descripción — de qué son estas notas */}
+          {!escaneando && extraccionesIA.filter(e => e.seleccionada && !e.guardada).length > 0 && (
+            <View style={{ paddingHorizontal: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#E2E8F0' }}>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: '#475569', marginBottom: 6 }}>
+                📝 ¿De qué son estas notas? (aparecerá en el mensaje a padres)
+              </Text>
+              <TextInput
+                style={{
+                  borderWidth: 1.5, borderColor: descripcionScan.trim() ? '#2D5FA8' : '#CBD5E1',
+                  borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10,
+                  fontSize: 14, color: '#0F172A', backgroundColor: '#F8FAFC', marginBottom: 12,
+                }}
+                value={descripcionScan}
+                onChangeText={setDescripcionScan}
+                placeholder="Ej: Taller de fracciones, Quiz de lectura, Evaluación bimestral..."
+                placeholderTextColor="#94A3B8"
+                returnKeyType="done"
+              />
+            </View>
+          )}
+
           {/* Botón guardar seleccionadas */}
           {!escaneando && extraccionesIA.filter(e => e.seleccionada && !e.guardada).length > 0 && (
-            <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: '#E2E8F0' }}>
+            <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
               <TouchableOpacity
                 style={{ backgroundColor: guardandoScan ? '#94A3B8' : '#2D5FA8', borderRadius: 12, paddingVertical: 15, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10 }}
                 onPress={guardarTodasLasNotas}
