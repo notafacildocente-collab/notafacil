@@ -75,7 +75,10 @@ export default function CalificacionScreen() {
   const [escaneando, setEscaneando] = useState(false);
   const [extraccionesIA, setExtraccionesIA] = useState<Array<{
     estudianteId: string; desempenoId: string; valor: number;
-    estudianteNombre: string; desempenoNombre: string; guardada?: boolean; error?: string;
+    estudianteNombre: string; desempenoNombre: string;
+    guardada?: boolean; error?: string;
+    notaExistente?: number | null;   // null = no existe, número = ya tiene nota
+    seleccionada: boolean;           // checkbox del profe
   }>>([]);
   const [guardandoScan, setGuardandoScan] = useState(false);
 
@@ -400,6 +403,7 @@ export default function CalificacionScreen() {
       const estudiantesInfo = estudiantes.map(e => ({ id: e.id, nombre: e.nombre, apellido: e.apellido }));
       const desempenosInfo = desempenos.map(d => ({ id: d.id, nombre: d.nombre, orden: d.orden }));
 
+      // 1️⃣ IA extrae notas de la imagen
       const res = await apiFetch('/api/notas/scan-planilla', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -415,11 +419,45 @@ export default function CalificacionScreen() {
       const { extracciones } = await res.json();
 
       if (!extracciones || extracciones.length === 0) {
-        Alert.alert('Sin resultados', 'La IA no encontró notas legibles en la imagen. Asegúrate que la planilla esté bien iluminada y enfocada.');
+        Alert.alert('Sin resultados', 'La IA no encontró notas legibles. Asegúrate que la planilla esté bien iluminada y enfocada.');
         setScannerVisible(false);
-      } else {
-        setExtraccionesIA(extracciones);
+        return;
       }
+
+      // 2️⃣ Verificar cuáles estudiantes ya tienen nota para ese desempeño
+      //    Consultar notas actuales de cada estudiante único encontrado
+      const idsUnicos = [...new Set(extracciones.map((e: any) => e.estudianteId as string))];
+      const notasPorEstudiante: Record<string, { desempenoId: string; valor: number }[]> = {};
+
+      await Promise.all(idsUnicos.map(async (estId) => {
+        try {
+          const r = await apiFetch(`/api/notas?asignacionId=${asignacionId}&estudianteId=${estId}`);
+          if (r.ok) {
+            const data: any[] = await r.json();
+            notasPorEstudiante[estId] = data.map(n => ({
+              desempenoId: n.desempenoId,
+              valor: parseFloat(n.valor),
+            }));
+          }
+        } catch { /* si falla, asumimos sin nota existente */ }
+      }));
+
+      // 3️⃣ Marcar cada extracción: ¿ya tiene nota? ¿es nueva?
+      const conEstado = extracciones.map((e: any) => {
+        const notasEst = notasPorEstudiante[e.estudianteId] || [];
+        const existente = notasEst.find(n => n.desempenoId === e.desempenoId);
+        return {
+          ...e,
+          notaExistente: existente ? existente.valor : null,
+          // Nuevas: seleccionadas por defecto ✓
+          // Ya tienen nota: desmarcadas por defecto (profe decide si reemplazar)
+          seleccionada: existente == null,
+          guardada: false,
+          error: undefined,
+        };
+      });
+
+      setExtraccionesIA(conEstado);
     } catch (err: any) {
       Alert.alert('Error', err.message || 'No se pudo escanear la planilla');
       setScannerVisible(false);
@@ -429,7 +467,11 @@ export default function CalificacionScreen() {
   };
 
   const guardarTodasLasNotas = async () => {
-    if (extraccionesIA.length === 0) return;
+    const seleccionadas = extraccionesIA.filter(e => e.seleccionada && !e.guardada);
+    if (seleccionadas.length === 0) {
+      Alert.alert('Nada seleccionado', 'Marca al menos una nota para guardar.');
+      return;
+    }
     try {
       setGuardandoScan(true);
       let ok = 0; let fail = 0;
@@ -437,6 +479,7 @@ export default function CalificacionScreen() {
 
       for (let i = 0; i < actualizadas.length; i++) {
         const e = actualizadas[i];
+        if (!e.seleccionada || e.guardada) continue;
         try {
           const res = await apiFetch('/api/notas', {
             method: 'POST',
@@ -450,14 +493,14 @@ export default function CalificacionScreen() {
             }),
           });
           if (res.ok) { actualizadas[i] = { ...e, guardada: true }; ok++; }
-          else { actualizadas[i] = { ...e, error: 'Error' }; fail++; }
+          else { actualizadas[i] = { ...e, error: 'Error al guardar' }; fail++; }
         } catch { actualizadas[i] = { ...e, error: 'Sin conexión' }; fail++; }
         setExtraccionesIA([...actualizadas]);
       }
       Alert.alert(
-        ok > 0 ? '✓ Notas guardadas' : 'Error',
-        `${ok} nota${ok !== 1 ? 's' : ''} guardada${ok !== 1 ? 's' : ''} correctamente${fail > 0 ? `\n${fail} con error` : ''}.`,
-        [{ text: 'Listo', onPress: () => { setScannerVisible(false); setExtraccionesIA([]); } }],
+        ok > 0 ? '✓ Notas guardadas' : 'Sin cambios',
+        `${ok} nota${ok !== 1 ? 's' : ''} guardada${ok !== 1 ? 's' : ''} correctamente${fail > 0 ? `\n⚠️ ${fail} con error` : ''}.`,
+        [{ text: 'Listo', onPress: () => { if (fail === 0) { setScannerVisible(false); setExtraccionesIA([]); } } }],
       );
     } finally {
       setGuardandoScan(false);
@@ -842,16 +885,18 @@ export default function CalificacionScreen() {
               <Ionicons name="close" size={20} color="#fff" />
             </TouchableOpacity>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: '#fff', fontSize: 17, fontWeight: '800' }}>Escáner de Planilla</Text>
-              <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, marginTop: 2 }}>IA · {extraccionesIA.length} nota{extraccionesIA.length !== 1 ? 's' : ''} detectada{extraccionesIA.length !== 1 ? 's' : ''}</Text>
+              <Text style={{ color: '#fff', fontSize: 17, fontWeight: '800' }}>Escáner de Planilla · IA</Text>
+              <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, marginTop: 2 }}>
+                {escaneando ? 'Analizando imagen...' : `${extraccionesIA.filter(e => e.seleccionada).length} seleccionada${extraccionesIA.filter(e => e.seleccionada).length !== 1 ? 's' : ''} de ${extraccionesIA.length}`}
+              </Text>
             </View>
           </View>
 
           {escaneando ? (
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 18, padding: 32 }}>
               <ActivityIndicator size="large" color="#2D5FA8" />
-              <Text style={{ fontSize: 16, color: '#475569', textAlign: 'center', paddingHorizontal: 32 }}>
-                La IA está leyendo las notas de tu planilla...{'\n'}Esto toma unos segundos.
+              <Text style={{ fontSize: 16, color: '#475569', textAlign: 'center', lineHeight: 24 }}>
+                La IA está leyendo las notas de tu planilla y verificando cuáles ya están registradas...{'\n'}Esto toma unos segundos.
               </Text>
             </View>
           ) : (
@@ -863,54 +908,96 @@ export default function CalificacionScreen() {
                 </View>
               ) : (
                 <>
-                  <Text style={{ fontSize: 13, color: '#475569', marginBottom: 12, lineHeight: 18 }}>
-                    Revisa las notas detectadas. Toca el ícono ✎ para editar algún valor antes de guardar.
-                  </Text>
-                  {extraccionesIA.map((e, i) => (
-                    <View key={i} style={{
-                      backgroundColor: e.guardada ? '#F0FDF4' : e.error ? '#FEF2F2' : '#FFFFFF',
-                      borderRadius: 12, padding: 14, marginBottom: 8,
-                      borderWidth: 1, borderColor: e.guardada ? '#86EFAC' : e.error ? '#FCA5A5' : '#E2E8F0',
-                      flexDirection: 'row', alignItems: 'center', gap: 12,
-                    }}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 13, fontWeight: '700', color: '#0F172A' }} numberOfLines={1}>
-                          {e.estudianteNombre}
-                        </Text>
-                        <Text style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{e.desempenoNombre}</Text>
-                      </View>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                        {e.guardada
-                          ? <Ionicons name="checkmark-circle" size={22} color="#16A34A" />
-                          : e.error
-                          ? <Ionicons name="alert-circle" size={22} color="#DC2626" />
-                          : null}
+                  {/* Leyenda */}
+                  <View style={{ backgroundColor: '#EFF6FF', borderRadius: 10, padding: 12, marginBottom: 14, borderWidth: 1, borderColor: '#BFDBFE' }}>
+                    <Text style={{ fontSize: 13, color: '#1D4ED8', fontWeight: '700', marginBottom: 4 }}>📋 Revisa antes de guardar</Text>
+                    <Text style={{ fontSize: 12, color: '#1D4ED8', lineHeight: 18 }}>
+                      ✅ <Text style={{ fontWeight: '700' }}>Verde</Text> = nota nueva (marcada para guardar){'\n'}
+                      ⚠️ <Text style={{ fontWeight: '700' }}>Naranja</Text> = ya tiene nota manual — desmarcada por defecto{'\n'}
+                      Toca el checkbox para incluir o excluir cada nota.
+                    </Text>
+                  </View>
+
+                  {/* Contadores */}
+                  <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
+                    <View style={{ flex: 1, backgroundColor: '#DCFCE7', borderRadius: 8, padding: 10, alignItems: 'center' }}>
+                      <Text style={{ fontSize: 20, fontWeight: '800', color: '#16A34A' }}>
+                        {extraccionesIA.filter(e => e.notaExistente == null).length}
+                      </Text>
+                      <Text style={{ fontSize: 11, color: '#15803D', marginTop: 2 }}>Notas nuevas</Text>
+                    </View>
+                    <View style={{ flex: 1, backgroundColor: '#FEF3C7', borderRadius: 8, padding: 10, alignItems: 'center' }}>
+                      <Text style={{ fontSize: 20, fontWeight: '800', color: '#D97706' }}>
+                        {extraccionesIA.filter(e => e.notaExistente != null).length}
+                      </Text>
+                      <Text style={{ fontSize: 11, color: '#92400E', marginTop: 2 }}>Ya tienen nota</Text>
+                    </View>
+                  </View>
+
+                  {/* Lista de extracciones */}
+                  {extraccionesIA.map((e, i) => {
+                    const esExistente = e.notaExistente != null;
+                    const bgColor = e.guardada ? '#F0FDF4' : e.error ? '#FEF2F2' : esExistente ? '#FFFBEB' : '#FFFFFF';
+                    const borderColor = e.guardada ? '#86EFAC' : e.error ? '#FCA5A5' : esExistente ? '#FCD34D' : '#E2E8F0';
+                    return (
+                      <TouchableOpacity
+                        key={i}
+                        style={{ backgroundColor: bgColor, borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: 1.5, borderColor: e.seleccionada ? (esExistente ? '#F59E0B' : '#2D5FA8') : borderColor, flexDirection: 'row', alignItems: 'center', gap: 12 }}
+                        onPress={() => {
+                          if (e.guardada) return;
+                          const upd = [...extraccionesIA];
+                          upd[i] = { ...upd[i], seleccionada: !upd[i].seleccionada };
+                          setExtraccionesIA(upd);
+                        }}
+                        activeOpacity={0.75}
+                        disabled={!!e.guardada}
+                      >
+                        {/* Checkbox */}
                         <View style={{
-                          backgroundColor: e.valor >= 3 ? '#DCFCE7' : '#FEE2E2',
-                          borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6,
+                          width: 24, height: 24, borderRadius: 6,
+                          borderWidth: 2,
+                          borderColor: e.guardada ? '#16A34A' : e.seleccionada ? (esExistente ? '#F59E0B' : '#2D5FA8') : '#CBD5E1',
+                          backgroundColor: e.guardada ? '#16A34A' : e.seleccionada ? (esExistente ? '#F59E0B' : '#2D5FA8') : '#fff',
+                          alignItems: 'center', justifyContent: 'center',
                         }}>
+                          {(e.seleccionada || e.guardada) && <Ionicons name="checkmark" size={14} color="#fff" />}
+                        </View>
+
+                        {/* Info */}
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 13, fontWeight: '700', color: '#0F172A' }} numberOfLines={1}>
+                            {e.estudianteNombre}
+                          </Text>
+                          <Text style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{e.desempenoNombre}</Text>
+                          {esExistente && (
+                            <Text style={{ fontSize: 11, color: '#92400E', marginTop: 3, fontWeight: '600' }}>
+                              ⚠️ Ya tiene nota: {e.notaExistente!.toFixed(1)} → reemplazar con {e.valor.toFixed(1)}
+                            </Text>
+                          )}
+                          {e.error && <Text style={{ fontSize: 11, color: '#DC2626', marginTop: 2 }}>❌ {e.error}</Text>}
+                          {e.guardada && <Text style={{ fontSize: 11, color: '#16A34A', marginTop: 2, fontWeight: '600' }}>✓ Guardada</Text>}
+                        </View>
+
+                        {/* Nota badge */}
+                        <View style={{ backgroundColor: e.valor >= 3 ? '#DCFCE7' : '#FEE2E2', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 }}>
                           <Text style={{ fontSize: 18, fontWeight: '800', color: e.valor >= 3 ? '#16A34A' : '#DC2626' }}>
                             {e.valor.toFixed(1)}
                           </Text>
                         </View>
-                      </View>
-                    </View>
-                  ))}
+                      </TouchableOpacity>
+                    );
+                  })}
                   <View style={{ height: 16 }} />
                 </>
               )}
             </ScrollView>
           )}
 
-          {/* Botón guardar todo */}
-          {!escaneando && extraccionesIA.length > 0 && !extraccionesIA.every(e => e.guardada) && (
+          {/* Botón guardar seleccionadas */}
+          {!escaneando && extraccionesIA.filter(e => e.seleccionada && !e.guardada).length > 0 && (
             <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: '#E2E8F0' }}>
               <TouchableOpacity
-                style={{
-                  backgroundColor: guardandoScan ? '#94A3B8' : '#2D5FA8',
-                  borderRadius: 12, paddingVertical: 15, alignItems: 'center', flexDirection: 'row',
-                  justifyContent: 'center', gap: 10,
-                }}
+                style={{ backgroundColor: guardandoScan ? '#94A3B8' : '#2D5FA8', borderRadius: 12, paddingVertical: 15, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10 }}
                 onPress={guardarTodasLasNotas}
                 disabled={guardandoScan}
               >
@@ -918,7 +1005,9 @@ export default function CalificacionScreen() {
                   ? <ActivityIndicator size="small" color="#fff" />
                   : <Ionicons name="cloud-upload-outline" size={20} color="#fff" />}
                 <Text style={{ color: '#fff', fontSize: 16, fontWeight: '800' }}>
-                  {guardandoScan ? 'Guardando...' : `Guardar ${extraccionesIA.length} nota${extraccionesIA.length !== 1 ? 's' : ''}`}
+                  {guardandoScan
+                    ? 'Guardando...'
+                    : `Guardar ${extraccionesIA.filter(e => e.seleccionada && !e.guardada).length} nota${extraccionesIA.filter(e => e.seleccionada && !e.guardada).length !== 1 ? 's' : ''} seleccionadas`}
                 </Text>
               </TouchableOpacity>
             </View>
