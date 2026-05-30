@@ -120,6 +120,10 @@ function App() {
   useEffect(() => {
     const bootstrapAsync = async () => {
       try {
+        // Despertar el servidor (Render duerme tras 15 min sin uso)
+        fetch('https://notafacil-backend-539h.onrender.com/api/auth/config')
+          .catch(() => {/* silent wake-up ping */});
+
         await initializeDatabase();
         await checkToken();
         const token = await SecureStore.getItemAsync('accessToken');

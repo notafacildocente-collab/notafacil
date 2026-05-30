@@ -279,7 +279,7 @@ export default function SeleccionarMateriaScreen({ navigation }: any) {
                   })}
                 >
                   <Ionicons name="document-text-outline" size={20} color="#64748B" />
-                  <Text style={styles.botonBoletinTexto}>Ver Boletín del Curso</Text>
+                  <Text style={styles.botonBoletinTexto}>Boletín PDF del Curso</Text>
                   <Ionicons name="chevron-forward" size={18} color="#64748B" />
                 </TouchableOpacity>
               )}
