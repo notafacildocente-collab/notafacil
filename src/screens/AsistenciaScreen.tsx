@@ -163,26 +163,30 @@ export default function AsistenciaScreen() {
       }));
       const payload = { asignacionId, fecha: fechaISO, registros: listaRegistros };
 
-      if (!isOnline) {
+      // Intentar guardar en servidor; si falla por red → cola offline
+      try {
+        const res = await apiFetch('/api/asistencia/guardar', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error((err as any).message || 'Error al guardar');
+        }
+        setYaGuardado(true);
+        Alert.alert('✓ Guardado', `Asistencia del ${formatFecha(fechaISO)} guardada correctamente.`);
+      } catch (netErr: any) {
+        if (netErr.message === 'Sesión vencida') throw netErr;
+        // Error de red → guardar localmente
         await offlineQueue.add({ tipo: 'ASISTENCIA', method: 'POST', url: '/api/asistencia/guardar', body: payload });
         await refreshPending();
         setYaGuardado(true);
-        Alert.alert('📥 Guardado sin internet', 'La asistencia se sincronizará automáticamente al reconectarte.');
-        return;
+        Alert.alert('📥 Guardado sin conexión', 'La asistencia se guardó localmente y se enviará al servidor cuando recuperes internet.');
       }
-
-      const res = await apiFetch('/api/asistencia/guardar', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error((err as any).message || 'Error al guardar');
-      }
-      setYaGuardado(true);
-      Alert.alert('✓ Guardado', `Asistencia del ${formatFecha(fechaISO)} guardada correctamente.`);
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'No se pudo guardar. Verifica tu conexión.');
+      if (error.message !== 'Sesión vencida') {
+        Alert.alert('Error', error.message || 'No se pudo guardar.');
+      }
     } finally {
       setSaving(false);
     }

@@ -157,52 +157,35 @@ export default function CalificacionScreen() {
         creadoOffline: !isOnline,
       };
 
-      if (!isOnline) {
-        // Guardar en cola offline — ID temporal para mostrar en UI
+      // Intentar guardar en servidor; si falla por red → cola offline
+      try {
+        const res = await apiFetch('/api/notas', { method: 'POST', body: JSON.stringify(payload) });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error((err as any).message || 'Error al guardar');
+        }
+        const notaNueva: any = await res.json();
+        setNotas((prev) => [{ ...notaNueva, valor: parseFloat(String(notaNueva.valor)) }, ...prev]);
+        setValorInput(''); setDescripcionInput(''); setSugerenciaIA(null); setImagenesIA([]); setModalVisible(false);
+        if (notaNueva.waLink) {
+          Alert.alert(
+            '✅ Nota guardada',
+            `¿Enviar notificación a acudiente de ${estudianteActivo?.apellido} ${estudianteActivo?.nombre}?`,
+            [
+              { text: 'No', style: 'cancel' },
+              { text: '📱 Enviar WhatsApp', onPress: () => Linking.openURL(notaNueva.waLink).catch(() => Alert.alert('Error', 'No se pudo abrir WhatsApp')) },
+            ],
+          );
+        }
+      } catch (netErr: any) {
+        if (netErr.message === 'Sesión vencida') throw netErr;
+        // Error de red → guardar localmente con ID temporal
         const tempId = `offline-${Date.now()}`;
-        const notaLocal: Nota = {
-          id: tempId,
-          estudianteId: estudianteActivo.id,
-          desempenoId: desempenoSeleccionado.id,
-          asignacionId,
-          valor,
-          descripcion: descripcionInput.trim(),
-          createdAt: new Date().toISOString(),
-        };
-        setNotas((prev) => [notaLocal, ...prev]);
-        await offlineQueue.add({ tipo: 'NOTA', method: 'POST', url: '/api/notas', body: payload });
+        setNotas((prev) => [{ id: tempId, estudianteId: estudianteActivo.id, desempenoId: desempenoSeleccionado.id, asignacionId, valor, descripcion: descripcionInput.trim(), createdAt: new Date().toISOString() }, ...prev]);
+        await offlineQueue.add({ tipo: 'NOTA', method: 'POST', url: '/api/notas', body: { ...payload, creadoOffline: true } });
         await refreshPending();
         setValorInput(''); setDescripcionInput(''); setSugerenciaIA(null); setImagenesIA([]); setModalVisible(false);
-        Alert.alert('📥 Guardado sin internet', 'La nota se sincronizará automáticamente cuando recuperes la conexión.');
-        return;
-      }
-
-      const res = await apiFetch('/api/notas', { method: 'POST', body: JSON.stringify(payload) });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error((err as any).message || 'Error al guardar');
-      }
-      const notaNueva: any = await res.json();
-      setNotas((prev) => [{ ...notaNueva, valor: parseFloat(String(notaNueva.valor)) }, ...prev]);
-      setValorInput('');
-      setDescripcionInput('');
-      setSugerenciaIA(null);
-      setImagenesIA([]);
-      setModalVisible(false);
-      if (notaNueva.waLink) {
-        Alert.alert(
-          '✅ Nota guardada',
-          `¿Enviar notificación a acudiente de ${estudianteActivo?.apellido} ${estudianteActivo?.nombre}?`,
-          [
-            { text: 'No', style: 'cancel' },
-            {
-              text: '📱 Enviar WhatsApp',
-              onPress: () => Linking.openURL(notaNueva.waLink).catch(() => {
-                Alert.alert('Error', 'No se pudo abrir WhatsApp');
-              }),
-            },
-          ],
-        );
+        Alert.alert('📥 Guardado sin conexión', 'La nota se guardó localmente y se enviará al servidor cuando recuperes internet.');
       }
     } catch (error: any) {
       if (error.message !== 'Sesión vencida') {
