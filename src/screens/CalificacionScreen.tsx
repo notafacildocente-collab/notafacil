@@ -478,6 +478,8 @@ export default function CalificacionScreen() {
       setGuardandoScan(true);
       let ok = 0; let fail = 0;
       const actualizadas = [...extraccionesIA];
+      // Recolectar waLinks de notas reprobadas para notificar padres al final
+      const waLinksReprobados: { nombre: string; waLink: string }[] = [];
 
       for (let i = 0; i < actualizadas.length; i++) {
         const e = actualizadas[i];
@@ -494,16 +496,54 @@ export default function CalificacionScreen() {
               creadoOffline: false,
             }),
           });
-          if (res.ok) { actualizadas[i] = { ...e, guardada: true }; ok++; }
-          else { actualizadas[i] = { ...e, error: 'Error al guardar' }; fail++; }
+          if (res.ok) {
+            actualizadas[i] = { ...e, guardada: true };
+            ok++;
+            // Si la nota es reprobada y el servidor devuelve waLink → guardar para notificar
+            try {
+              const data = await res.json();
+              if (data.waLink && e.valor < 3.0) {
+                waLinksReprobados.push({ nombre: e.estudianteNombre, waLink: data.waLink });
+              }
+            } catch { /* sin waLink, sin problema */ }
+          } else { actualizadas[i] = { ...e, error: 'Error al guardar' }; fail++; }
         } catch { actualizadas[i] = { ...e, error: 'Sin conexión' }; fail++; }
         setExtraccionesIA([...actualizadas]);
       }
-      Alert.alert(
-        ok > 0 ? '✓ Notas guardadas' : 'Sin cambios',
-        `${ok} nota${ok !== 1 ? 's' : ''} guardada${ok !== 1 ? 's' : ''} correctamente${fail > 0 ? `\n⚠️ ${fail} con error` : ''}.`,
-        [{ text: 'Listo', onPress: () => { if (fail === 0) { setScannerVisible(false); setExtraccionesIA([]); } } }],
-      );
+
+      // Mensaje de resultado
+      const resMsg = `${ok} nota${ok !== 1 ? 's' : ''} guardada${ok !== 1 ? 's' : ''} correctamente${fail > 0 ? `\n⚠️ ${fail} con error` : ''}.`;
+
+      if (waLinksReprobados.length > 0) {
+        // Preguntar si notificar a padres de reprobados
+        Alert.alert(
+          '✓ Notas guardadas',
+          `${resMsg}\n\n📱 Hay ${waLinksReprobados.length} estudiante${waLinksReprobados.length !== 1 ? 's' : ''} con nota reprobada. ¿Desea enviar notificación a sus padres por WhatsApp?`,
+          [
+            {
+              text: 'No', style: 'cancel',
+              onPress: () => { if (fail === 0) { setScannerVisible(false); setExtraccionesIA([]); } },
+            },
+            {
+              text: `Notificar (${waLinksReprobados.length})`,
+              onPress: async () => {
+                if (fail === 0) { setScannerVisible(false); setExtraccionesIA([]); }
+                // Abrir WhatsApp para cada padre de reprobado con una pequeña pausa entre cada uno
+                for (const { waLink } of waLinksReprobados) {
+                  await Linking.openURL(waLink).catch(() => {});
+                  await new Promise(r => setTimeout(r, 800));
+                }
+              },
+            },
+          ],
+        );
+      } else {
+        Alert.alert(
+          ok > 0 ? '✓ Notas guardadas' : 'Sin cambios',
+          resMsg,
+          [{ text: 'Listo', onPress: () => { if (fail === 0) { setScannerVisible(false); setExtraccionesIA([]); } } }],
+        );
+      }
     } finally {
       setGuardandoScan(false);
     }
