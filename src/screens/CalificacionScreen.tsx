@@ -70,6 +70,14 @@ export default function CalificacionScreen() {
   const [modalTelefono, setModalTelefono] = useState(false);
   const [telefonoInput, setTelefonoInput] = useState('');
   const [guardandoTelefono, setGuardandoTelefono] = useState(false);
+  // ── Scanner de planilla ──
+  const [scannerVisible, setScannerVisible] = useState(false);
+  const [escaneando, setEscaneando] = useState(false);
+  const [extraccionesIA, setExtraccionesIA] = useState<Array<{
+    estudianteId: string; desempenoId: string; valor: number;
+    estudianteNombre: string; desempenoNombre: string; guardada?: boolean; error?: string;
+  }>>([]);
+  const [guardandoScan, setGuardandoScan] = useState(false);
 
   useEffect(() => {
     const cargarDatosIniciales = async () => {
@@ -365,6 +373,97 @@ export default function CalificacionScreen() {
     );
   }
 
+  // ── Escáner de planilla ──────────────────────────────────────────────────
+  const abrirScanner = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permiso requerido', 'Necesitamos acceso a la cámara para escanear la planilla.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.85,
+      base64: true,
+      allowsEditing: false,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+
+    const asset = result.assets[0];
+    const base64 = asset.base64 || '';
+    if (!base64) { Alert.alert('Error', 'No se pudo obtener la imagen'); return; }
+
+    try {
+      setEscaneando(true);
+      setScannerVisible(true);
+      setExtraccionesIA([]);
+
+      const estudiantesInfo = estudiantes.map(e => ({ id: e.id, nombre: e.nombre, apellido: e.apellido }));
+      const desempenosInfo = desempenos.map(d => ({ id: d.id, nombre: d.nombre, orden: d.orden }));
+
+      const res = await apiFetch('/api/notas/scan-planilla', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imagen: { base64, mimeType: 'image/jpeg' },
+          estudiantesInfo,
+          desempenosInfo,
+          asignacionId,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Error al escanear');
+      const { extracciones } = await res.json();
+
+      if (!extracciones || extracciones.length === 0) {
+        Alert.alert('Sin resultados', 'La IA no encontró notas legibles en la imagen. Asegúrate que la planilla esté bien iluminada y enfocada.');
+        setScannerVisible(false);
+      } else {
+        setExtraccionesIA(extracciones);
+      }
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'No se pudo escanear la planilla');
+      setScannerVisible(false);
+    } finally {
+      setEscaneando(false);
+    }
+  };
+
+  const guardarTodasLasNotas = async () => {
+    if (extraccionesIA.length === 0) return;
+    try {
+      setGuardandoScan(true);
+      let ok = 0; let fail = 0;
+      const actualizadas = [...extraccionesIA];
+
+      for (let i = 0; i < actualizadas.length; i++) {
+        const e = actualizadas[i];
+        try {
+          const res = await apiFetch('/api/notas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              asignacionId,
+              desempenoId: e.desempenoId,
+              estudianteId: e.estudianteId,
+              valor: e.valor,
+              creadoOffline: false,
+            }),
+          });
+          if (res.ok) { actualizadas[i] = { ...e, guardada: true }; ok++; }
+          else { actualizadas[i] = { ...e, error: 'Error' }; fail++; }
+        } catch { actualizadas[i] = { ...e, error: 'Sin conexión' }; fail++; }
+        setExtraccionesIA([...actualizadas]);
+      }
+      Alert.alert(
+        ok > 0 ? '✓ Notas guardadas' : 'Error',
+        `${ok} nota${ok !== 1 ? 's' : ''} guardada${ok !== 1 ? 's' : ''} correctamente${fail > 0 ? `\n${fail} con error` : ''}.`,
+        [{ text: 'Listo', onPress: () => { setScannerVisible(false); setExtraccionesIA([]); } }],
+      );
+    } finally {
+      setGuardandoScan(false);
+    }
+  };
+
   const notaFinal = calcularNotaFinal();
   const aprobado = notaFinal >= 3.0;
   const colorFinal = notaFinal === 0 ? '#94A3B8' : aprobado ? '#10b981' : '#ef4444';
@@ -383,6 +482,13 @@ export default function CalificacionScreen() {
           <Text style={styles.headerMateria} numberOfLines={1}>{materiaNombre}</Text>
           <Text style={styles.headerSub}>Calificar · P{periodoNumero}</Text>
         </View>
+        <TouchableOpacity
+          style={styles.scanBtn}
+          onPress={abrirScanner}
+          activeOpacity={0.75}
+        >
+          <Ionicons name="scan-outline" size={22} color="#2D5FA8" />
+        </TouchableOpacity>
       </View>
 
       {/* ── Búsqueda ── */}
@@ -723,6 +829,102 @@ export default function CalificacionScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* ── Modal escáner de planilla ── */}
+      <Modal visible={scannerVisible} animationType="slide" transparent={false}>
+        <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
+          {/* Header */}
+          <View style={{ backgroundColor: '#2D5FA8', paddingTop: 52, paddingBottom: 16, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <TouchableOpacity
+              style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }}
+              onPress={() => { setScannerVisible(false); setExtraccionesIA([]); }}
+            >
+              <Ionicons name="close" size={20} color="#fff" />
+            </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: '#fff', fontSize: 17, fontWeight: '800' }}>Escáner de Planilla</Text>
+              <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, marginTop: 2 }}>IA · {extraccionesIA.length} nota{extraccionesIA.length !== 1 ? 's' : ''} detectada{extraccionesIA.length !== 1 ? 's' : ''}</Text>
+            </View>
+          </View>
+
+          {escaneando ? (
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+              <ActivityIndicator size="large" color="#2D5FA8" />
+              <Text style={{ fontSize: 16, color: '#475569', textAlign: 'center', paddingHorizontal: 32 }}>
+                La IA está leyendo las notas de tu planilla...{'\n'}Esto toma unos segundos.
+              </Text>
+            </View>
+          ) : (
+            <ScrollView contentContainerStyle={{ padding: 16 }}>
+              {extraccionesIA.length === 0 ? (
+                <View style={{ alignItems: 'center', paddingTop: 60, gap: 12 }}>
+                  <Ionicons name="document-text-outline" size={52} color="#94A3B8" />
+                  <Text style={{ color: '#94A3B8', fontSize: 15, textAlign: 'center' }}>No se encontraron notas en la imagen</Text>
+                </View>
+              ) : (
+                <>
+                  <Text style={{ fontSize: 13, color: '#475569', marginBottom: 12, lineHeight: 18 }}>
+                    Revisa las notas detectadas. Toca el ícono ✎ para editar algún valor antes de guardar.
+                  </Text>
+                  {extraccionesIA.map((e, i) => (
+                    <View key={i} style={{
+                      backgroundColor: e.guardada ? '#F0FDF4' : e.error ? '#FEF2F2' : '#FFFFFF',
+                      borderRadius: 12, padding: 14, marginBottom: 8,
+                      borderWidth: 1, borderColor: e.guardada ? '#86EFAC' : e.error ? '#FCA5A5' : '#E2E8F0',
+                      flexDirection: 'row', alignItems: 'center', gap: 12,
+                    }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 13, fontWeight: '700', color: '#0F172A' }} numberOfLines={1}>
+                          {e.estudianteNombre}
+                        </Text>
+                        <Text style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{e.desempenoNombre}</Text>
+                      </View>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        {e.guardada
+                          ? <Ionicons name="checkmark-circle" size={22} color="#16A34A" />
+                          : e.error
+                          ? <Ionicons name="alert-circle" size={22} color="#DC2626" />
+                          : null}
+                        <View style={{
+                          backgroundColor: e.valor >= 3 ? '#DCFCE7' : '#FEE2E2',
+                          borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6,
+                        }}>
+                          <Text style={{ fontSize: 18, fontWeight: '800', color: e.valor >= 3 ? '#16A34A' : '#DC2626' }}>
+                            {e.valor.toFixed(1)}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  ))}
+                  <View style={{ height: 16 }} />
+                </>
+              )}
+            </ScrollView>
+          )}
+
+          {/* Botón guardar todo */}
+          {!escaneando && extraccionesIA.length > 0 && !extraccionesIA.every(e => e.guardada) && (
+            <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: '#E2E8F0' }}>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: guardandoScan ? '#94A3B8' : '#2D5FA8',
+                  borderRadius: 12, paddingVertical: 15, alignItems: 'center', flexDirection: 'row',
+                  justifyContent: 'center', gap: 10,
+                }}
+                onPress={guardarTodasLasNotas}
+                disabled={guardandoScan}
+              >
+                {guardandoScan
+                  ? <ActivityIndicator size="small" color="#fff" />
+                  : <Ionicons name="cloud-upload-outline" size={20} color="#fff" />}
+                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '800' }}>
+                  {guardandoScan ? 'Guardando...' : `Guardar ${extraccionesIA.length} nota${extraccionesIA.length !== 1 ? 's' : ''}`}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -743,6 +945,11 @@ const styles = StyleSheet.create({
     gap: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
+  },
+  scanBtn: {
+    width: 40, height: 40, borderRadius: 20,
+    justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: '#BFDBFE',
   },
   backBtn: {
     width: 36, height: 36, borderRadius: 18,
